@@ -20,7 +20,7 @@ type GcloudHost struct {
     HostProvider
     Project string
     Zones []string
-    Instances []*GcloudInstance{}
+    Instances []*GcloudInstance
     Client *http.Client
 }
 
@@ -43,7 +43,7 @@ type GcloudNetworkInterface struct {
     network string
     networkIP string
     name string
-    accessConfigs []GcloudAccessConfig{}
+    accessConfigs []GcloudAccessConfig
 }
 
 type GcloudDisk struct {
@@ -79,37 +79,37 @@ type GcloudInstance struct {
     StatusMessage string `json:"statusMessage"`
     Name string `json:"name"`
     Description string `json:"description"`
-    Tags struct { `json:"tags"`
+    Tags struct {
         Items []string `json:"items"`
         Fingerprint []byte `json:"fingerprint"`
-    }
+    }  `json:"tags"`
     MachineType string `json:"machineType"`
     CanIpForward bool `json:"canIpForward"`
-    NetworkInterfaces []GcloudNetworkInterface{} `json:"networkInterfaces"`
-    Disks []GcloudDisk{} `json:"disks"`
-    Metadata struct { `json:"metaData"`
+    NetworkInterfaces []GcloudNetworkInterface `json:"networkInterfaces"`
+    Disks []GcloudDisk `json:"disks"`
+    Metadata struct {
         kind string `json:"kind"`
         Fingerprint []byte `json:"fingerPrint"`
-        Items []struct{ `json:"items"`
+        Items []struct{
             Key string `json:"key"`
             Value string `json:"value"`
-        }
-    }
-    serviceAccounts []GcloudServiceAccounts{}
+        } `json:"items"`
+    } `json:"metaData"`
+    serviceAccounts []GcloudServiceAccounts
     selfLink string
-    scheduling struct {
-        onHostMaintenance string
-        automaticRestart bool
-        preemptible bool
-    }
-    cpuPlatform string
+    Scheduling struct {
+        OnHostMaintenance string `json:"onHostMaintenance"`
+        AutomaticRestart bool `json:"automaticRestart"`
+        Preemptible bool `json:"preemptible"`
+    } `json:"scheduling"`
+    CpuPlatform string `json:"cpuPlatform"`
 }
 
 func NewGCEInstance() *GcloudInstance{
-    return &GcloudInstance{}
+    return &GcloudInstance
 }
 
-func NewGcloud(projID, jsonFile string) *GcloudHost, error{
+func NewGcloud(projID, jsonFile string) (*GcloudHost, error){
     var projID string
     var client *http.Client
     if jsonFile != "" {
@@ -140,7 +140,7 @@ func NewGcloud(projID, jsonFile string) *GcloudHost, error{
     return newHost, nil
 }
 
-func(g *GcloudHost) GetServers(namespace string) []GcloudInstance, error{
+func(g *GcloudHost) GetServers(namespace string) ([]GcloudInstance, error){
     gcloudRoute, rErr := gce.Get(fmt.Sprintf("/projects/%s/zones/instances"))
     if rErr != nil {
         return nil, rErr
