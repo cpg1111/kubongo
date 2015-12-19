@@ -12,8 +12,8 @@ import (
     "golang.org/x/net/context"
     "golang.org/x/oauth2"
     "golang.org/x/oauth2/google"
-    gcloud "github.com/GoogleCloudPlatform/gcloud-golang"
-    gce "github.com/GoogleCloudPlatform/gcloud-golang/compute/metadata"
+    gcloud "google.golang.org/cloud"
+    gce "google.golang.org/cloud/compute/metadata"
 )
 
 type GcloudHost struct {
