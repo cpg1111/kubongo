@@ -6,27 +6,8 @@
 	],
 	"Deps": [
 		{
-			"ImportPath": "github.com/coreos/etcd/client",
-			"Comment": "v2.3.0-alpha.0-211-g2e736b5",
-			"Rev": "2e736b51cceb5b8fe841e449190bb133edfb865e"
-		},
-		{
-			"ImportPath": "github.com/coreos/etcd/pkg/pathutil",
-			"Comment": "v2.3.0-alpha.0-211-g2e736b5",
-			"Rev": "2e736b51cceb5b8fe841e449190bb133edfb865e"
-		},
-		{
-			"ImportPath": "github.com/coreos/etcd/pkg/types",
-			"Comment": "v2.3.0-alpha.0-211-g2e736b5",
-			"Rev": "2e736b51cceb5b8fe841e449190bb133edfb865e"
-		},
-		{
 			"ImportPath": "github.com/golang/protobuf/proto",
 			"Rev": "68415e7123da32b07eab49c96d2c4d6158360e9b"
-		},
-		{
-			"ImportPath": "github.com/ugorji/go/codec",
-			"Rev": "646ae4a518c1c3be0739df898118d9bccf993858"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

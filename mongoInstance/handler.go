@@ -2,13 +2,10 @@ package mongoInstance
 
 import (
 	"net/http"
-
-	etcd "github.com/coreos/etcd/client"
 )
 
 type mongoHandler struct {
 	http.Handler
-	EtcdClient etcd.KeyApi
 }
 
 func NewHandler(e etcd.KeyApi) {
