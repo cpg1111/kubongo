@@ -24,6 +24,3 @@ _testmain.go
 *.prof
 
 /Godeps/_workspace/*
-
-/src/
-Status API Training Shop Blog About Pricing

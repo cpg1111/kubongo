@@ -1,29 +1,41 @@
 {
 	"ImportPath": "github.com/cpg1111/kubongo",
 	"GoVersion": "go1.4.2",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
-			"ImportPath": "github.com/coreos/etcd/client",
-			"Comment": "v2.3.0-alpha.0-211-g2e736b5",
-			"Rev": "2e736b51cceb5b8fe841e449190bb133edfb865e"
-		},
-		{
-			"ImportPath": "github.com/coreos/etcd/pkg/pathutil",
-			"Comment": "v2.3.0-alpha.0-211-g2e736b5",
-			"Rev": "2e736b51cceb5b8fe841e449190bb133edfb865e"
-		},
-		{
-			"ImportPath": "github.com/coreos/etcd/pkg/types",
-			"Comment": "v2.3.0-alpha.0-211-g2e736b5",
-			"Rev": "2e736b51cceb5b8fe841e449190bb133edfb865e"
-		},
-		{
-			"ImportPath": "github.com/ugorji/go/codec",
-			"Rev": "646ae4a518c1c3be0739df898118d9bccf993858"
+			"ImportPath": "github.com/golang/protobuf/proto",
+			"Rev": "68415e7123da32b07eab49c96d2c4d6158360e9b"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "68a055e15f0ce90989da5564fd947fb72ce67513"
+		},
+		{
+			"ImportPath": "golang.org/x/net/http2",
+			"Rev": "68a055e15f0ce90989da5564fd947fb72ce67513"
+		},
+		{
+			"ImportPath": "golang.org/x/net/internal/timeseries",
+			"Rev": "68a055e15f0ce90989da5564fd947fb72ce67513"
+		},
+		{
+			"ImportPath": "golang.org/x/net/trace",
+			"Rev": "68a055e15f0ce90989da5564fd947fb72ce67513"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
+		},
+		{
+			"ImportPath": "google.golang.org/cloud",
+			"Rev": "371034814b480712a2c2c80befcdae2324b905d9"
+		},
+		{
+			"ImportPath": "google.golang.org/grpc",
+			"Rev": "b9a4f2b9f9dac22bdd2705ad40bcc2128d439635"
 		}
 	]
 }

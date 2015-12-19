@@ -1,12 +1,12 @@
 package main
 
 import (
-    "net/http"
+	"net/http"
 
-    "github.com/cpg1111/kubongo/mongoInstance"
+	"github.com/cpg1111/kubongo/mongoInstance"
 )
 
-func main(){
-    server := http.NewServeMux()
-    server.Handle()
+func main() {
+	server := http.NewServeMux()
+	server.Handle()
 }
