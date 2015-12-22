@@ -8,7 +8,7 @@ type mongoHandler struct {
 	http.Handler
 }
 
-func NewHandler(e etcd.KeyApi) {
+func NewHandler() *mongoHandler{
 	return &mongoHandler{}
 }
 
@@ -26,5 +26,17 @@ func (m *mongoHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 }
 
 func (m *mongoHandler) Get(res http.ResponseWriter, req *http.Request) {
+
+}
+
+func (m *mongoHandler) Post(res http.ResponseWriter, req *http.Request) {
+
+}
+
+func (m *mongoHandler) Put(res http.ResponseWriter, req *http.Request) {
+
+}
+
+func (m *mongoHandler) Delete(res http.ResponseWriter, req *http.Request) {
 
 }
