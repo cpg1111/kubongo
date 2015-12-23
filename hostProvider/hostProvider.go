@@ -5,5 +5,6 @@ type instance interface {
 }
 
 type HostProvider interface {
-	GetServerNames(namespace string) []instance, error
+	GetServers(namespace string) ([]instance, error)
+	CreateServer(namespace, zone, name, machineType, sourceImage, source string) ([]byte, error)
 }

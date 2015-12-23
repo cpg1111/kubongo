@@ -1,18 +1,16 @@
 package hostProvider
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	gcloud "google.golang.org/cloud"
 	gce "google.golang.org/cloud/compute/metadata"
 )
 
@@ -40,9 +38,9 @@ type GcloudAccessConfig struct {
 }
 
 type GcloudNetworkInterface struct {
-	Network       string `json:"network"`
-	NetworkIP     string `json:"networkIP"`
-	Name          string `json:"name"`
+	Network       string               `json:"network"`
+	NetworkIP     string               `json:"networkIP"`
+	Name          string               `json:"name"`
 	AccessConfigs []GcloudAccessConfig `json:"accessConfigs"`
 }
 
@@ -106,29 +104,29 @@ type GcloudInstance struct {
 	CpuPlatform string `json:"cpuPlatform"`
 }
 
-func(g *GcloudInstance) GetInternalIP() string{
-    for i := range g.NetworkInterfaces {
-        if g.NetworkInterfaces[i].Name == "eth0" {
-            return g.NetworkInterfaces[i].NetworkIP
-        }
-    }
+func (g GcloudInstance) GetInternalIP() string {
+	for i := range g.NetworkInterfaces {
+		if g.NetworkInterfaces[i].Name == "eth0" {
+			return g.NetworkInterfaces[i].NetworkIP
+		}
+	}
+	return ""
 }
 
 func NewGCEInstance() *GcloudInstance {
 	return &GcloudInstance{}
 }
 
-func NewGcloud(projID, jsonFile string) (*GcloudHost, error) {
-	var projID string
+func NewGcloud(p, jsonFile string) *GcloudHost {
 	var client *http.Client
 	if jsonFile != "" {
 		jsonKey, err := ioutil.ReadFile(jsonFile)
 		if err != nil {
-			return nil, err
+			log.Fatal(err)
 		}
 		conf, err := google.JWTConfigFromJSON(jsonKey, "https://www.googleapis.com/auth/compute")
 		if err != nil {
-			return nil, err
+			log.Fatal(err)
 		}
 		client = conf.Client(oauth2.NoContext)
 	} else if gce.OnGCE() {
@@ -138,33 +136,69 @@ func NewGcloud(projID, jsonFile string) (*GcloudHost, error) {
 			},
 		}
 	} else {
-		return nil, errors.New("Could Not Auth with Google")
+		log.Fatal(errors.New("Could Not Auth with Google"))
 	}
 	newHost := &GcloudHost{
 		Project:   p,
 		Zones:     []string{""},
-		Instances: make([]GcloudInstance, 1), // append to this
+		Instances: make([]*GcloudInstance, 1), // append to this
 		Client:    client,
 	}
-	return newHost, nil
+	return newHost
 }
 
-func (g *GcloudHost) GetServers(namespace string) ([]GcloudInstance, error) {
-	gcloudRoute, rErr := gce.Get(fmt.Sprintf("/projects/%s/zones/instances"))
-	if rErr != nil {
-		return nil, rErr
-	}
+func (g GcloudHost) GetServers(namespace string) ([]instance, error) {
+	gcloudRoute := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/instances", namespace)
 	res, resErr := g.Client.Get(gcloudRoute)
 	if resErr != nil {
-		return nil, rErr
+		return nil, resErr
+	}
+	defer res.Body.Close()
+	decoder := json.NewDecoder(res.Body)
+	result := &instanceResponse{}
+	decodeErr := decoder.Decode(result)
+	if decodeErr != nil {
+		return nil, decodeErr
+	}
+	newInstances := make([]instance, len(result.items))
+	for i := range result.items {
+		newInstances[i] = *NewGCEInstance()
+		unmarshErr := json.Unmarshal([]byte(result.items[i]), newInstances[i])
+		if unmarshErr != nil {
+			return nil, unmarshErr
+		}
+	}
+	return newInstances, nil
+}
+
+type InstanceTemplate struct {
+	Name        string `json:"name"`
+	MachineType string `json:"machineType"`
+	SourceImage string `json:"sourceImage"`
+	Source      string `json:"source"`
+}
+
+func (g GcloudHost) CreateServer(namespace, zone, name, machineType, sourceImage, source string) ([]byte, error) {
+	gcloudRoute := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances", namespace, zone)
+	newInstance := &InstanceTemplate{
+		Name:        name,
+		MachineType: machineType,
+		SourceImage: sourceImage,
+		Source:      source,
+	}
+	reqBytes, bErr := json.Marshal(newInstance)
+	if bErr != nil {
+		return nil, bErr
+	}
+	reqPayload := bytes.NewBuffer(reqBytes)
+	res, resErr := g.Client.Post(gcloudRoute, "application/JSON", reqPayload)
+	if resErr != nil {
+		return nil, resErr
 	}
 	defer res.Body.Close()
 	body, bErr := ioutil.ReadAll(res.Body)
 	if bErr != nil {
 		return nil, bErr
 	}
-	decoder := json.NewDecoder(body)
-	result := &instanceResponse{}
-	decoder.Decode(result)
-	return result.items, nil
+	return body, nil
 }

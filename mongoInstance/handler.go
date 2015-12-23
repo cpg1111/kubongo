@@ -1,20 +1,33 @@
 package mongoInstance
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/cpg1111/kubongo/hostProvider"
 )
 
-type mongoHandler struct {
+type MongoHandler struct {
 	http.Handler
+	Platform    string
+	platformCtl hostProvider.HostProvider
 }
 
-func NewHandler() *mongoHandler {
-	return &mongoHandler{}
+func NewHandler(platform, projectID, confPath string) *MongoHandler {
+	var host hostProvider.HostProvider
+	var hErr error
+	switch platform {
+	case "gcloud":
+		host = *hostProvider.NewGcloud(projectID, confPath)
+	}
+	if hErr != nil {
+		log.Fatal(hErr)
+	}
+	return &MongoHandler{Platform: platform, platformCtl: host}
 }
 
-func (m *mongoHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func (m *MongoHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "GET":
 		m.Get(res, req)
@@ -27,18 +40,55 @@ func (m *mongoHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (m *mongoHandler) Get(res http.ResponseWriter, req *http.Request) {
+func (m *MongoHandler) Get(res http.ResponseWriter, req *http.Request) {
 
 }
 
-func (m *mongoHandler) Post(res http.ResponseWriter, req *http.Request) {
+type InstanceTemplate struct {
+	Kind        string `json:"kind"`
+	name        string
+	Zone        string `json:"zone"`
+	MachineType string `json:"machineType"`
+	SourceImage string `json:"sourceImage"`
+	Source      string `json:"source"`
+}
+
+// mongoHandler#Post will either create or register an instance based the "kind" field in the request body
+// Request Body Srtuct:
+// type InstanceTemplate struct{
+//     Kind string `json:"kind"`
+//     name string
+//     Zone string `json:"zone"`
+//     MachineType string `json:"machineType"`
+//     SourceImage string `json:"sourceImage"`
+//     Source string `json:"source"`
+// }
+func (m *MongoHandler) Post(res http.ResponseWriter, req *http.Request) {
+	defer req.Body.Close()
+	reqDecoder := json.NewDecoder(req.Body)
+	newInstanceTmpl := &InstanceTemplate{}
+	deErr := reqDecoder.Decode(newInstanceTmpl)
+	if deErr != nil {
+		log.Fatal(deErr)
+	}
+	serverRes, serverErr := m.platformCtl.CreateServer(
+		m.Platform,
+		newInstanceTmpl.Zone,
+		newInstanceTmpl.name,
+		newInstanceTmpl.MachineType,
+		newInstanceTmpl.SourceImage,
+		newInstanceTmpl.Source,
+	)
+	if serverErr != nil {
+		log.Fatal(serverErr)
+	}
+	res.Write(serverRes)
+}
+
+func (m *MongoHandler) Put(res http.ResponseWriter, req *http.Request) {
 
 }
 
-func (m *mongoHandler) Put(res http.ResponseWriter, req *http.Request) {
-
-}
-
-func (m *mongoHandler) Delete(res http.ResponseWriter, req *http.Request) {
+func (m *MongoHandler) Delete(res http.ResponseWriter, req *http.Request) {
 
 }
