@@ -2,13 +2,15 @@ package mongoInstance
 
 import (
 	"net/http"
+
+	"github.com/cpg1111/kubongo/hostProvider"
 )
 
 type mongoHandler struct {
 	http.Handler
 }
 
-func NewHandler() *mongoHandler{
+func NewHandler() *mongoHandler {
 	return &mongoHandler{}
 }
 

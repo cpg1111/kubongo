@@ -1,7 +1,7 @@
 package main
 
 import (
-    "log"
+	"log"
 	"net/http"
 
 	mongo "github.com/cpg1111/kubongo/mongoInstance"
@@ -9,7 +9,7 @@ import (
 
 func main() {
 	server := http.NewServeMux()
-    mongoHandler := mongo.NewHandler()
+	mongoHandler := mongo.NewHandler()
 	server.Handle("/instances", mongoHandler)
-    log.Fatal(http.ListenAndServe(":8888", nil))
+	log.Fatal(http.ListenAndServe(":8888", nil))
 }

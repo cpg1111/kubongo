@@ -40,10 +40,10 @@ type GcloudAccessConfig struct {
 }
 
 type GcloudNetworkInterface struct {
-	network       string
-	networkIP     string
-	name          string
-	accessConfigs []GcloudAccessConfig
+	Network       string `json:"network"`
+	NetworkIP     string `json:"networkIP"`
+	Name          string `json:"name"`
+	AccessConfigs []GcloudAccessConfig `json:"accessConfigs"`
 }
 
 type GcloudDisk struct {
@@ -71,6 +71,7 @@ type GcloudServiceAccounts struct {
 }
 
 type GcloudInstance struct {
+	instance
 	kind              string
 	Id                uint64 `json:"id"`
 	creationTimestamp string
@@ -105,8 +106,16 @@ type GcloudInstance struct {
 	CpuPlatform string `json:"cpuPlatform"`
 }
 
+func(g *GcloudInstance) GetInternalIP() string{
+    for i := range g.NetworkInterfaces {
+        if g.NetworkInterfaces[i].Name == "eth0" {
+            return g.NetworkInterfaces[i].NetworkIP
+        }
+    }
+}
+
 func NewGCEInstance() *GcloudInstance {
-	return &GcloudInstance
+	return &GcloudInstance{}
 }
 
 func NewGcloud(projID, jsonFile string) (*GcloudHost, error) {
