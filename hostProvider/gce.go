@@ -69,7 +69,7 @@ type GcloudServiceAccounts struct {
 }
 
 type GcloudInstance struct {
-	instance
+	Instance
 	kind              string
 	Id                uint64 `json:"id"`
 	creationTimestamp string
@@ -147,7 +147,7 @@ func NewGcloud(p, jsonFile string) *GcloudHost {
 	return newHost
 }
 
-func (g GcloudHost) GetServers(namespace string) ([]instance, error) {
+func (g GcloudHost) GetServers(namespace string) ([]Instance, error) {
 	gcloudRoute := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/instances", namespace)
 	res, resErr := g.Client.Get(gcloudRoute)
 	if resErr != nil {
@@ -160,7 +160,7 @@ func (g GcloudHost) GetServers(namespace string) ([]instance, error) {
 	if decodeErr != nil {
 		return nil, decodeErr
 	}
-	newInstances := make([]instance, len(result.items))
+	newInstances := make([]Instance, len(result.items))
 	for i := range result.items {
 		newInstances[i] = *NewGCEInstance()
 		unmarshErr := json.Unmarshal([]byte(result.items[i]), newInstances[i])
@@ -169,6 +169,22 @@ func (g GcloudHost) GetServers(namespace string) ([]instance, error) {
 		}
 	}
 	return newInstances, nil
+}
+
+func (g GcloudHost) GetServer(project, zone, name string) (Instance, error) {
+	gcloudRoute := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances/%s", project, zone, name)
+	res, resErr := g.Client.Get(gcloudRoute)
+	if resErr != nil {
+		return nil, resErr
+	}
+	defer res.Body.Close()
+	decoder := json.NewDecoder(res.Body)
+	result := &GcloudInstance{}
+	decodeErr := decoder.Decode(result)
+	if decodeErr != nil {
+		return nil, decodeErr
+	}
+	return result, nil
 }
 
 type InstanceTemplate struct {
