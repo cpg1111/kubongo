@@ -6,23 +6,7 @@
 	],
 	"Deps": [
 		{
-			"ImportPath": "github.com/golang/protobuf/proto",
-			"Rev": "68415e7123da32b07eab49c96d2c4d6158360e9b"
-		},
-		{
 			"ImportPath": "golang.org/x/net/context",
-			"Rev": "68a055e15f0ce90989da5564fd947fb72ce67513"
-		},
-		{
-			"ImportPath": "golang.org/x/net/http2",
-			"Rev": "68a055e15f0ce90989da5564fd947fb72ce67513"
-		},
-		{
-			"ImportPath": "golang.org/x/net/internal/timeseries",
-			"Rev": "68a055e15f0ce90989da5564fd947fb72ce67513"
-		},
-		{
-			"ImportPath": "golang.org/x/net/trace",
 			"Rev": "68a055e15f0ce90989da5564fd947fb72ce67513"
 		},
 		{
@@ -30,12 +14,20 @@
 			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
 		},
 		{
-			"ImportPath": "google.golang.org/cloud",
+			"ImportPath": "google.golang.org/cloud/compute/metadata",
 			"Rev": "371034814b480712a2c2c80befcdae2324b905d9"
 		},
 		{
-			"ImportPath": "google.golang.org/grpc",
-			"Rev": "b9a4f2b9f9dac22bdd2705ad40bcc2128d439635"
+			"ImportPath": "google.golang.org/cloud/internal",
+			"Rev": "371034814b480712a2c2c80befcdae2324b905d9"
+		},
+		{
+			"ImportPath": "gopkg.in/check.v1",
+			"Rev": "4f90aeace3a26ad7021961c297b22c42160c7b25"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "f7716cbe52baa25d2e9b0d0da546fcf909fc16b4"
 		}
 	]
 }

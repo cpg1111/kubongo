@@ -78,12 +78,12 @@ func (m *MongoHandler) Get(res http.ResponseWriter, req *http.Request) {
 }
 
 type InstanceTemplate struct {
-	Kind        string `json:"kind"` // should equal "Create" or "Register"
+	Kind        string `json:"kind" yaml:"kind"` // should equal "Create" or "Register"
 	name        string
-	Zone        string `json:"zone"`
-	MachineType string `json:"machineType"`
-	SourceImage string `json:"sourceImage"`
-	Source      string `json:"source"`
+	Zone        string `json:"zone" yaml:"zone"`
+	MachineType string `json:"machineType" yaml:"machineType"`
+	SourceImage string `json:"sourceImage" yaml:"sourceImage"`
+	Source      string `json:"source" yaml:"source"`
 }
 
 // mongoHandler#Post will either create or register an instance based the "kind" field in the request body
