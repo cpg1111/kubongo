@@ -2,6 +2,7 @@ package mongoInstance
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -10,7 +11,7 @@ import (
 )
 
 type MongoHandler struct {
-	http.Handler
+	projectID   string
 	Platform    string
 	platformCtl hostProvider.HostProvider
 	Manager     Manager
@@ -28,6 +29,7 @@ func NewHandler(platform, projectID, confPath string, inst metadata.Instances) *
 		log.Fatal(hErr)
 	}
 	return &MongoHandler{
+		projectID:   projectID,
 		Platform:    platform,
 		platformCtl: host,
 		Manager:     *NewManager(platform, &host),
@@ -35,7 +37,8 @@ func NewHandler(platform, projectID, confPath string, inst metadata.Instances) *
 	}
 }
 
-func (m *MongoHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func (m MongoHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+	log.Println("HTTP request:", *req)
 	switch req.Method {
 	case "GET":
 		m.Get(res, req)
@@ -48,8 +51,30 @@ func (m *MongoHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (m *MongoHandler) Get(res http.ResponseWriter, req *http.Request) {
+type infoRes struct {
+	platform          string
+	projectName       string
+	numberOfInstances int
+	zones             []string
+	instances         metadata.Instances
+}
 
+func (m *MongoHandler) Get(res http.ResponseWriter, req *http.Request) {
+	numInsts := len(m.Instances)
+	payload := &infoRes{
+		platform:          m.Platform,
+		projectName:       m.projectID,
+		numberOfInstances: numInsts,
+		zones:             []string{" "},
+		instances:         m.Instances,
+	}
+	header := res.Header()
+	encoder := json.NewEncoder(res)
+	enErr := encoder.Encode(payload)
+	if enErr != nil {
+		header.Set("status", fmt.Sprintf("%v", http.StatusInternalServerError))
+		res.Write([]byte("{\"error\":\"Internal Server Error\"}"))
+	}
 }
 
 type InstanceTemplate struct {
