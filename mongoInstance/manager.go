@@ -17,7 +17,7 @@ func (m *Manager) Register(zone, name string, instances *metadata.Instances) {
 	if serverErr != nil {
 		log.Fatal(serverErr)
 	}
-    newInstances := metadata.AddInstance(*instances, hostProvider.GcloudInstance(newServer))
+    newInstances := metadata.AddInstance(*instances, newServer)
 	instances = &newInstances
 }
 
