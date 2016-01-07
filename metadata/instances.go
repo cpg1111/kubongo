@@ -1,7 +1,7 @@
 package metadata
 
 import (
-    "fmt"
+	"fmt"
 
 	"github.com/cpg1111/kubongo/hostProvider"
 )
@@ -10,7 +10,7 @@ type Instances []hostProvider.Instance
 
 func (inst Instances) ToMap() (instanceMap map[string]hostProvider.Instance) {
 	for i := range inst {
-        castInst := inst[i].(hostProvider.GcloudInstance)
+		castInst := inst[i].(hostProvider.GcloudInstance)
 		instanceMap[fmt.Sprintf("%v", castInst.Id)] = inst[i]
 	}
 	return
@@ -30,8 +30,8 @@ func AddInstance(list Instances, instance hostProvider.Instance) Instances {
 func RemoveInstance(list Instances, instance hostProvider.Instance) Instances {
 	newList := make(Instances, len(list)-1)
 	for i := range list {
-        castInst := list[i].(hostProvider.GcloudInstance)
-        castOther := instance.(hostProvider.GcloudInstance)
+		castInst := list[i].(hostProvider.GcloudInstance)
+		castOther := instance.(hostProvider.GcloudInstance)
 		if castInst.Id != castOther.Id {
 			newList[i] = list[i]
 		}

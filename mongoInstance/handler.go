@@ -94,7 +94,7 @@ func (m *MongoHandler) Post(res http.ResponseWriter, req *http.Request) {
 		res.Write(serverRes)
 	} else {
 		m.Manager.Register(newInstanceTmpl.Zone, newInstanceTmpl.name, &m.Instances)
-        res.Write([]byte("{\"message\":\"201 Created\"}"))
+		res.Write([]byte("{\"message\":\"201 Created\"}"))
 	}
 }
 
