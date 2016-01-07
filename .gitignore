@@ -23,4 +23,8 @@ _testmain.go
 *.test
 *.prof
 
+# Godeps
 /Godeps/_workspace/*
+
+# cloud platform config file
+/config.json

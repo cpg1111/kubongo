@@ -1,5 +1,11 @@
 package hostProvider
 
+type Instance interface {
+	GetInternalIP() string
+}
+
 type HostProvider interface {
-	GetServerNames(namespace string)
+	GetServers(namespace string) ([]Instance, error)
+	CreateServer(namespace, zone, name, machineType, sourceImage, source string) ([]byte, error)
+	GetServer(project, zone, name string) (Instance, error)
 }
