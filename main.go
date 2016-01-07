@@ -27,6 +27,6 @@ func main() {
 	instances := metadata.New(nil)
 	mongoHandler := mongo.NewHandler(*platform, *project, *platConfPath, instances)
 	server.Handle("/instances", mongoHandler)
-	log.Println("Kubongo Process started and is listening on port", portNum)
+	log.Println("Kubongo Process started and is listening on port", port)
 	log.Fatal(http.ListenAndServe(portNum, server))
 }

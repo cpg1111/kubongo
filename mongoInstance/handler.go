@@ -52,21 +52,21 @@ func (m MongoHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 }
 
 type infoRes struct {
-	platform          string
-	projectName       string
-	numberOfInstances int
-	zones             []string
-	instances         metadata.Instances
+	Platform          string             `json:"platform"`
+	ProjectName       string             `json:"projectName"`
+	NumberOfInstances int                `json:"numberOfInstances"`
+	Zones             []string           `json:"zones"`
+	Instances         metadata.Instances `json:"instances"`
 }
 
 func (m *MongoHandler) Get(res http.ResponseWriter, req *http.Request) {
 	numInsts := len(m.Instances)
 	payload := &infoRes{
-		platform:          m.Platform,
-		projectName:       m.projectID,
-		numberOfInstances: numInsts,
-		zones:             []string{" "},
-		instances:         m.Instances,
+		Platform:          m.Platform,
+		ProjectName:       m.projectID,
+		NumberOfInstances: numInsts,
+		Zones:             []string{},
+		Instances:         m.Instances,
 	}
 	header := res.Header()
 	encoder := json.NewEncoder(res)
@@ -78,7 +78,7 @@ func (m *MongoHandler) Get(res http.ResponseWriter, req *http.Request) {
 }
 
 type InstanceTemplate struct {
-	Kind        string `json:"kind"`
+	Kind        string `json:"kind"` // should equal "Create" or "Register"
 	name        string
 	Zone        string `json:"zone"`
 	MachineType string `json:"machineType"`
@@ -89,12 +89,12 @@ type InstanceTemplate struct {
 // mongoHandler#Post will either create or register an instance based the "kind" field in the request body
 // Request Body Srtuct:
 // type InstanceTemplate struct{
-//     Kind string `json:"kind"` // should equal "Create" or "Regist"
-//     name string
-//     Zone string `json:"zone"`
+//     Kind        string `json:"kind"` // should equal "Create" or "Register"
+//     name        string
+//     Zone        string `json:"zone"`
 //     MachineType string `json:"machineType"`
 //     SourceImage string `json:"sourceImage"`
-//     Source string `json:"source"`
+//     Source      string `json:"source"`
 // }
 func (m *MongoHandler) Post(res http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
