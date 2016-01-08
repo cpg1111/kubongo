@@ -22,7 +22,7 @@ func printHelp() {
     log.Println("Kubongoctl")
     log.Println(" ")
     log.Println("USAGE")
-    log.Println("kubongoctl [options] ACTION [action arguments] TARGET")
+    log.Println("kubongoctl [options] ACTION [action arguments] TARGET | TARGET EDIT")
     log.Println(" ")
     log.Println("OPTIONS")
     log.Println("--platform-config", "./config.json", "Set the path to a json config for cloud platform, defaults to ./config.json")
@@ -71,7 +71,38 @@ func create(url string) (*http.Response, error){
 }
 
 func edit(url string) (*http.Response, error){
-    return nil, nil
+    var instanceConf string
+    if len(os.Args) > 3 {
+        instanceConf = os.Args[4]
+        confInfo, confErr := os.Stat(instanceConf)
+        if confInfo != nil || confErr == nil {
+            confBytes, readErr := ioutil.ReadFile(instanceConf)
+            if readErr != nil {
+                return nil, errors.New("Could not open file to create instance")
+            }
+            inst, instErr := decodeInstanceFile(instanceConf, confBytes)
+            if instErr != nil {
+                return nil, instErr
+            }
+            instPayload, payloadErr := json.Marshal(inst)
+            if payloadErr != nil {
+                return nil, payloadErr
+            }
+            req, reqErr := http.NewRequest("PUT", url, bytes.NewBuffer(instPayload))
+            if reqErr != nil {
+                return nil, reqErr
+            }
+            req.Header.Set("content-type", "json")
+            client := &http.Client{}
+            res, resErr := client.Do(req)
+            if resErr != nil {
+                return nil, resErr
+            }
+            return res, nil
+        }
+        return nil, confErr
+    }
+    return nil, errors.New("No instance name given")
 }
 
 func destroy(url string) (*http.Response, error){
