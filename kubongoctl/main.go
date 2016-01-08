@@ -73,7 +73,7 @@ func create(url string) (*http.Response, error){
 func edit(url string) (*http.Response, error){
     var instanceConf string
     if len(os.Args) > 3 {
-        instanceConf = os.Args[4]
+        instanceConf = os.Args[3]
         confInfo, confErr := os.Stat(instanceConf)
         if confInfo != nil || confErr == nil {
             confBytes, readErr := ioutil.ReadFile(instanceConf)
@@ -102,11 +102,26 @@ func edit(url string) (*http.Response, error){
         }
         return nil, confErr
     }
-    return nil, errors.New("No instance name given")
+    return nil, errors.New("No edit file given")
 }
 
 func destroy(url string) (*http.Response, error){
-    return nil, nil
+    var instanceName string
+    if len(os.Args) > 3 {
+        instanceName = os.Args[3]
+        req, reqErr := http.NewRequest("DELETE", url, bytes.NewBuffer([]byte(fmt.Sprintf("{\"name\":\"%s\"}", instanceName))))
+        if reqErr != nil {
+            return nil, reqErr
+        }
+        req.Header.Set("content-type", "json")
+        client := &http.Client{}
+        res, resErr := client.Do(req)
+        if resErr != nil {
+            return nil, resErr
+        }
+        return res, nil
+    }
+    return nil, errors.New("No instance name given")
 }
 
 func request(host, port, method, endpoint string) (res *http.Response, resErr error) {
