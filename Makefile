@@ -34,6 +34,7 @@ get-deps:
 	rm -rf ./Godeps/_workspace/
 	godep restore ./...
 build:
+	rm -rf ./Godeps/_workspace/
 	godep restore ./...
 	go build -o ./kubongo github.com/cpg1111/kubongo/
 	$(LDD_CMD) ./kubongo
