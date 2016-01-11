@@ -30,7 +30,8 @@ else
 endif
 all: build
 get-deps:
-	go get ./...
+	go get github.com/tools/godep
+	rm -rf ./Godeps/_workspace/
 	godep restore ./...
 build:
 	godep restore ./...
