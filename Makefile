@@ -30,9 +30,11 @@ else
 endif
 all: build
 get-deps:
-	go get ./...
+	go get github.com/tools/godep
+	rm -rf ./Godeps/_workspace/
 	godep restore ./...
 build:
+	rm -rf ./Godeps/_workspace/
 	godep restore ./...
 	go build -o ./kubongo github.com/cpg1111/kubongo/
 	$(LDD_CMD) ./kubongo
