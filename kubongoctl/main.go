@@ -31,10 +31,10 @@ func printHelp() {
 	os.Exit(0)
 }
 
-func decodeInstanceFile(filename string, file []byte) (*mongo.InstanceTemplate, error) {
+func DecodeInstanceFile(filename string, file []byte) (*mongo.InstanceTemplate, error) {
 	instance := &mongo.InstanceTemplate{}
-	isYaml := (strings.HasSuffix(filename, ".yaml") || strings.HasSuffix(filename, ".yml"))
-	isJson := strings.HasSuffix(filename, ".json")
+	isYaml := (strings.Contains(filename, ".yaml") || strings.Contains(filename, ".yml"))
+	isJson := strings.Contains(filename, ".json")
 	var err error
 	if isYaml {
 		err = yaml.Unmarshal(file, instance)
@@ -46,7 +46,7 @@ func decodeInstanceFile(filename string, file []byte) (*mongo.InstanceTemplate, 
 	return instance, err
 }
 
-func create(url string) (*http.Response, error) {
+func Create(url string) (*http.Response, error) {
 	var instanceConf string
 	if len(os.Args) > 3 {
 		instanceConf = os.Args[3]
@@ -56,7 +56,7 @@ func create(url string) (*http.Response, error) {
 			if readErr != nil {
 				return nil, errors.New("Could not open file to create instance")
 			}
-			inst, instErr := decodeInstanceFile(instanceConf, confBytes)
+			inst, instErr := DecodeInstanceFile(instanceConf, confBytes)
 			if instErr != nil {
 				return nil, instErr
 			}
@@ -70,7 +70,7 @@ func create(url string) (*http.Response, error) {
 	return nil, errors.New("No input given to create instance")
 }
 
-func edit(url string) (*http.Response, error) {
+func Edit(url string) (*http.Response, error) {
 	var instanceConf string
 	if len(os.Args) > 3 {
 		instanceConf = os.Args[3]
@@ -80,7 +80,7 @@ func edit(url string) (*http.Response, error) {
 			if readErr != nil {
 				return nil, errors.New("Could not open file to create instance")
 			}
-			inst, instErr := decodeInstanceFile(instanceConf, confBytes)
+			inst, instErr := DecodeInstanceFile(instanceConf, confBytes)
 			if instErr != nil {
 				return nil, instErr
 			}
@@ -105,7 +105,7 @@ func edit(url string) (*http.Response, error) {
 	return nil, errors.New("No edit file given")
 }
 
-func destroy(url string) (*http.Response, error) {
+func Destroy(url string) (*http.Response, error) {
 	var instanceName string
 	if len(os.Args) > 3 {
 		instanceName = os.Args[3]
@@ -124,20 +124,20 @@ func destroy(url string) (*http.Response, error) {
 	return nil, errors.New("No instance name given")
 }
 
-func request(host, port, method, endpoint string) (res *http.Response, resErr error) {
+func Request(host, port, method, endpoint string) (res *http.Response, resErr error) {
 	targetURL := fmt.Sprintf("http://%s:%s/%s", host, port, endpoint)
 	switch method {
 	case "info":
 		res, resErr = http.Get(targetURL)
 		break
 	case "create":
-		res, resErr = create(targetURL)
+		res, resErr = Create(targetURL)
 		break
 	case "edit":
-		res, resErr = edit(targetURL)
+		res, resErr = Edit(targetURL)
 		break
 	case "delete":
-		res, resErr = destroy(targetURL)
+		res, resErr = Destroy(targetURL)
 		break
 	default:
 		res = nil
@@ -174,5 +174,5 @@ func main() {
 	if len(os.Args) > 2 {
 		endpoint = os.Args[2]
 	}
-	log.Println(request(*host, fmt.Sprintf("%v", *port), method, endpoint))
+	log.Println(Request(*host, fmt.Sprintf("%v", *port), method, endpoint))
 }

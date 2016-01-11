@@ -79,7 +79,7 @@ func (m *MongoHandler) Get(res http.ResponseWriter, req *http.Request) {
 
 type InstanceTemplate struct {
 	Kind        string `json:"kind" yaml:"kind"` // should equal "Create" or "Register"
-	name        string
+	Name        string `json:"name" yaml:"name"`
 	Zone        string `json:"zone" yaml:"zone"`
 	MachineType string `json:"machineType" yaml:"machineType"`
 	SourceImage string `json:"sourceImage" yaml:"sourceImage"`
@@ -108,7 +108,7 @@ func (m *MongoHandler) Post(res http.ResponseWriter, req *http.Request) {
 		serverRes, serverErr := m.platformCtl.CreateServer(
 			m.Platform,
 			newInstanceTmpl.Zone,
-			newInstanceTmpl.name,
+			newInstanceTmpl.Name,
 			newInstanceTmpl.MachineType,
 			newInstanceTmpl.SourceImage,
 			newInstanceTmpl.Source,
@@ -118,7 +118,7 @@ func (m *MongoHandler) Post(res http.ResponseWriter, req *http.Request) {
 		}
 		res.Write(serverRes)
 	} else {
-		m.Manager.Register(newInstanceTmpl.Zone, newInstanceTmpl.name, &m.Instances)
+		m.Manager.Register(newInstanceTmpl.Zone, newInstanceTmpl.Name, &m.Instances)
 		res.Write([]byte("{\"message\":\"201 Created\"}"))
 	}
 }
