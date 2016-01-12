@@ -21,6 +21,10 @@ func (m *Manager) Register(zone, name string, instances *metadata.Instances) {
 	instances = &newInstances
 }
 
+func (m *Manager) Remove(zone, name string) {
+	m.platformCtl.DeleteServer(m.Platform, zone, name)
+}
+
 func NewManager(pf string, pfctl *hostProvider.HostProvider) *Manager {
 	return &Manager{Platform: pf, platformCtl: *pfctl}
 }

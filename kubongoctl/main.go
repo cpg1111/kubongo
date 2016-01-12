@@ -70,41 +70,6 @@ func Create(url string) (*http.Response, error) {
 	return nil, errors.New("No input given to create instance")
 }
 
-func Edit(url string) (*http.Response, error) {
-	var instanceConf string
-	if len(os.Args) > 3 {
-		instanceConf = os.Args[3]
-		confInfo, confErr := os.Stat(instanceConf)
-		if confInfo != nil || confErr == nil {
-			confBytes, readErr := ioutil.ReadFile(instanceConf)
-			if readErr != nil {
-				return nil, errors.New("Could not open file to create instance")
-			}
-			inst, instErr := DecodeInstanceFile(instanceConf, confBytes)
-			if instErr != nil {
-				return nil, instErr
-			}
-			instPayload, payloadErr := json.Marshal(inst)
-			if payloadErr != nil {
-				return nil, payloadErr
-			}
-			req, reqErr := http.NewRequest("PUT", url, bytes.NewBuffer(instPayload))
-			if reqErr != nil {
-				return nil, reqErr
-			}
-			req.Header.Set("content-type", "json")
-			client := &http.Client{}
-			res, resErr := client.Do(req)
-			if resErr != nil {
-				return nil, resErr
-			}
-			return res, nil
-		}
-		return nil, confErr
-	}
-	return nil, errors.New("No edit file given")
-}
-
 func Destroy(url string) (*http.Response, error) {
 	var instanceName string
 	if len(os.Args) > 3 {
@@ -132,9 +97,6 @@ func Request(host, port, method, endpoint string) (res *http.Response, resErr er
 		break
 	case "create":
 		res, resErr = Create(targetURL)
-		break
-	case "edit":
-		res, resErr = Edit(targetURL)
 		break
 	case "delete":
 		res, resErr = Destroy(targetURL)

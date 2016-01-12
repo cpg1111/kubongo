@@ -23,18 +23,18 @@ type GcloudHost struct {
 }
 
 type instanceResponse struct {
-	kind          string
-	selfLink      string
-	id            string
-	items         []string
-	nextPageToken string
+	Kind          string   `json:"kind"`
+	SelfLink      string   `json:"selfLink"`
+	Id            string   `json:"id"`
+	Items         []string `json:"items"`
+	NextPageToken string   `json:"nextPageToken"`
 }
 
 type GcloudAccessConfig struct {
-	kind       string
-	accessType string `json:"type"`
-	name       string
-	natIP      string
+	Kind       string `json:"kind"`
+	AccessType string `json:"type"`
+	Name       string `json:"name"`
+	NatIP      string `json:"natIP"`
 }
 
 type GcloudNetworkInterface struct {
@@ -45,34 +45,34 @@ type GcloudNetworkInterface struct {
 }
 
 type GcloudDisk struct {
-	kind             string
-	index            int
+	Kind             string `json:"kind"`
+	Index            int    `json:"index"`
 	DiskType         string `json:"type"`
-	mode             string
-	source           string
-	deviceName       string
-	boot             bool
-	initializeParams struct {
-		diskName    string
-		sourceImage string
-		diskSizeGb  uint64
-		diskType    string
-	}
-	autoDelete    bool
-	licenses      []string
-	DiskInterface string `json:"interface"`
+	Mode             string `json:"mode"`
+	Source           string `json:"source"`
+	DeviceName       string `json:"deviceName"`
+	Boot             bool   `json:"boot"`
+	InitializeParams struct {
+		DiskName    string `json:"diskName"`
+		SourceImage string `json:"sourceImage"`
+		DiskSizeGb  uint64 `json:"diskSizeGb"`
+		DiskType    string `json:"diskType"`
+	} `json:"initializeParams"`
+	AutoDelete    bool     `json:"autoDelete"`
+	Licenses      []string `json:"licenses"`
+	DiskInterface string   `json:"interface"`
 }
 
 type GcloudServiceAccounts struct {
-	email  string
-	scopes []string
+	Email  string   `json:"email"`
+	Scopes []string `json:"scopes"`
 }
 
 type GcloudInstance struct {
 	Instance
-	kind              string
+	Kind              string `json:"kind"`
 	Id                uint64 `json:"id"`
-	creationTimestamp string
+	CreationTimestamp string `json:"creationTimestamp"`
 	Zone              string `json:"zone"`
 	Status            string `json:"status"`
 	StatusMessage     string `json:"statusMessage"`
@@ -87,15 +87,15 @@ type GcloudInstance struct {
 	NetworkInterfaces []GcloudNetworkInterface `json:"networkInterfaces"`
 	Disks             []GcloudDisk             `json:"disks"`
 	Metadata          struct {
-		kind        string `json:"kind"`
+		Kind        string `json:"kind"`
 		Fingerprint []byte `json:"fingerPrint"`
 		Items       []struct {
 			Key   string `json:"key"`
 			Value string `json:"value"`
 		} `json:"items"`
 	} `json:"metaData"`
-	serviceAccounts []GcloudServiceAccounts
-	selfLink        string
+	ServiceAccounts []GcloudServiceAccounts `json:"serviceAccounts"`
+	SelfLink        string                  `json:"selfLink"`
 	Scheduling      struct {
 		OnHostMaintenance string `json:"onHostMaintenance"`
 		AutomaticRestart  bool   `json:"automaticRestart"`
@@ -217,4 +217,15 @@ func (g GcloudHost) CreateServer(namespace, zone, name, machineType, sourceImage
 		return nil, bErr
 	}
 	return body, nil
+}
+
+func (g GcloudHost) DeleteServer(namespace, zone, name string) error {
+	gcloudRoute := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances/%s", project, zone, name)
+	req, reqErr := http.NewRequest("DELETE", gcloudRoute, nil)
+	res, resErr := g.Client.Do(req)
+	if resErr != nil {
+		return resErr
+	}
+	defer res.Body.Close()
+	return nil
 }

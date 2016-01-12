@@ -123,10 +123,17 @@ func (m *MongoHandler) Post(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (m *MongoHandler) Put(res http.ResponseWriter, req *http.Request) {
-
+type DeleteData struct {
+	Name string `json:"name"`
 }
 
 func (m *MongoHandler) Delete(res http.ResponseWriter, req *http.Request) {
-
+	defer req.Body.Close()
+	reqDecoder := json.NewDecoder(req.Body)
+	data := &DeleteData{}
+	deErr := reqDecoder.Decode(data)
+	if deErr != nil {
+		log.Fatal(deErr)
+	}
+	m.Manager.DeleteServer("", data.Name)
 }
