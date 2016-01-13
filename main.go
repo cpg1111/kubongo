@@ -16,6 +16,7 @@ func main() {
 		project      = flag.String("-project", "", "Set which project/organization to use, defaults to empty")
 		platConfPath = flag.String("-platform-config", "./config.json", "Set the path to a json config for cloud platform, defaults to ./config.json")
 		port         = flag.Int("-port", 8888, "Set the port number for kubungo's api server to listen on, defaults to 8888")
+		initMaster   = flag.String("init-master", "127.0.0.1:28017", "Set the IP address and port of the master or mongos for monitoring, default is 127.0.0.1:28017")
 		help         = flag.Bool("-help", false, "Prints info on Kubongo")
 	)
 	flag.Parse()
@@ -27,6 +28,8 @@ func main() {
 	instances := metadata.New(nil)
 	mongoHandler := mongo.NewHandler(*platform, *project, *platConfPath, instances)
 	server.Handle("/instances", mongoHandler)
-	log.Println("Kubongo Process started and is listening on port", port)
+	log.Println("Kubongo Process started and is listening on port", *port)
+	log.Println("monitoring", *initMaster)
+	mongoHandler.Manager.Monitor(initMaster)
 	log.Fatal(http.ListenAndServe(portNum, server))
 }

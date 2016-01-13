@@ -2,6 +2,7 @@ package mongoInstance
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/cpg1111/kubongo/hostProvider"
 	"github.com/cpg1111/kubongo/metadata"
@@ -39,6 +40,17 @@ func (m *Manager) Register(zone, name string, instances *metadata.Instances) ([]
 func (m *Manager) Remove(zone, name string) error {
 	dErr := m.platformCtl.DeleteServer(m.Platform, zone, name)
 	return dErr
+}
+
+func (m *Manager) Monitor(masterIP *string) {
+	monitor := newMonitor(masterIP)
+	isHealthy := true
+	healthChannel := make(chan bool)
+	for isHealthy {
+		go monitor.HealthCheck(healthChannel)
+		isHealthy = <-healthChannel
+		time.Sleep(time.Second * 3)
+	}
 }
 
 func NewManager(proj, pf string, pfctl *hostProvider.HostProvider) *Manager {
