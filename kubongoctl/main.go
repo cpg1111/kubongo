@@ -41,7 +41,7 @@ func DecodeInstanceFile(filename string, file []byte) (*mongo.InstanceTemplate, 
 	} else if isJson {
 		err = json.Unmarshal(file, instance)
 	} else {
-		return nil, errors.New("Input was not yaml or json")
+		return nil, errors.New("input was not yaml or json")
 	}
 	return instance, err
 }
@@ -54,7 +54,7 @@ func Create(url string) (*http.Response, error) {
 		if confInfo != nil || confErr == nil {
 			confBytes, readErr := ioutil.ReadFile(instanceConf)
 			if readErr != nil {
-				return nil, errors.New("Could not open file to create instance")
+				return nil, errors.New("could not open file to create instance")
 			}
 			inst, instErr := DecodeInstanceFile(instanceConf, confBytes)
 			if instErr != nil {
@@ -67,26 +67,29 @@ func Create(url string) (*http.Response, error) {
 			return http.Post(url, "json", bytes.NewBuffer(instPayload))
 		}
 	}
-	return nil, errors.New("No input given to create instance")
+	return nil, errors.New("no input given to create instance")
 }
 
 func Destroy(url string) (*http.Response, error) {
-	var instanceName string
 	if len(os.Args) > 3 {
-		instanceName = os.Args[3]
-		req, reqErr := http.NewRequest("DELETE", url, bytes.NewBuffer([]byte(fmt.Sprintf("{\"name\":\"%s\"}", instanceName))))
-		if reqErr != nil {
-			return nil, reqErr
+		zoneName := os.Args[3]
+		if len(os.Args) > 4 {
+			instanceName := os.Args[3]
+			req, reqErr := http.NewRequest("DELETE", url, bytes.NewBuffer([]byte(fmt.Sprintf("{\"zone\":\"%s\", \"name\":\"%s\"}", zoneName, instanceName))))
+			if reqErr != nil {
+				return nil, reqErr
+			}
+			req.Header.Set("content-type", "json")
+			client := &http.Client{}
+			res, resErr := client.Do(req)
+			if resErr != nil {
+				return nil, resErr
+			}
+			return res, nil
 		}
-		req.Header.Set("content-type", "json")
-		client := &http.Client{}
-		res, resErr := client.Do(req)
-		if resErr != nil {
-			return nil, resErr
-		}
-		return res, nil
+		return nil, errors.New("no instance name given")
 	}
-	return nil, errors.New("No instance name given")
+	return nil, errors.New("no instance zone given")
 }
 
 func Request(host, port, method, endpoint string) (res *http.Response, resErr error) {

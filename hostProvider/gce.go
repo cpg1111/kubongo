@@ -160,10 +160,10 @@ func (g GcloudHost) GetServers(namespace string) ([]Instance, error) {
 	if decodeErr != nil {
 		return nil, decodeErr
 	}
-	newInstances := make([]Instance, len(result.items))
-	for i := range result.items {
+	newInstances := make([]Instance, len(result.Items))
+	for i := range result.Items {
 		newInstances[i] = *NewGCEInstance()
-		unmarshErr := json.Unmarshal([]byte(result.items[i]), newInstances[i])
+		unmarshErr := json.Unmarshal([]byte(result.Items[i]), newInstances[i])
 		if unmarshErr != nil {
 			return nil, unmarshErr
 		}
@@ -220,8 +220,11 @@ func (g GcloudHost) CreateServer(namespace, zone, name, machineType, sourceImage
 }
 
 func (g GcloudHost) DeleteServer(namespace, zone, name string) error {
-	gcloudRoute := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances/%s", project, zone, name)
+	gcloudRoute := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances/%s", namespace, zone, name)
 	req, reqErr := http.NewRequest("DELETE", gcloudRoute, nil)
+	if reqErr != nil {
+		return reqErr
+	}
 	res, resErr := g.Client.Do(req)
 	if resErr != nil {
 		return resErr

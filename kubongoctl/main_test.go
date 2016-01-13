@@ -77,19 +77,19 @@ func TestDecodeFileInstanceFile(t *testing.T) {
 		t.Error(yErr)
 	}
 	if string(jData) != testFiles.JsonString {
-		t.Error("Read JSON File Does Not Match Input JSON File")
+		t.Error("read JSON File Does Not Match Input JSON File")
 	}
 	if string(yData) != testFiles.YamlString {
-		t.Error("Read YAML File Does Not Match Input YAML File")
+		t.Error("read YAML File Does Not Match Input YAML File")
 	}
 	jInstance, instErr := DecodeInstanceFile(testFiles.JsonFile.Name(), jData)
 	if instErr != nil || jInstance.Name != "test" {
 		t.Log(instErr)
-		t.Error("Instance Does Not Match Input JSON File")
+		t.Error("instance Does Not Match Input JSON File")
 	}
 	yInstance, instErr := DecodeInstanceFile(testFiles.YamlFile.Name(), yData)
 	if instErr != nil || yInstance.Name != "test" {
 		t.Log(instErr)
-		t.Error("Instance Does Not Match Input Yaml File")
+		t.Error("instance Does Not Match Input Yaml File")
 	}
 }
