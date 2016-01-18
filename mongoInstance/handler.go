@@ -22,8 +22,11 @@ func NewHandler(platform, projectID, confPath string, inst metadata.Instances) *
 	var host hostProvider.HostProvider
 	var hErr error
 	switch platform {
-	case "gcloud":
-		host = *hostProvider.NewGcloud(projectID, confPath)
+	case "GCE":
+		host, hErr = *hostProvider.NewGcloud(projectID, confPath)
+	case "local"
+		host = *hostProvider.NewLocal()
+		hErr = nil
 	}
 	if hErr != nil {
 		log.Fatal(hErr)

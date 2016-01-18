@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/cpg1111/kubongo/hostProvider"
@@ -40,7 +41,15 @@ func (m *Manager) Create(newInstanceTmpl *InstanceTemplate, instances *metadata.
 }
 
 func (m *Manager) Register(zone, name string, instances *metadata.Instances) ([]byte, error) {
-	newServer, serverErr := m.platformCtl.GetServer(m.Platform, zone, name)
+	var (
+		newServer hostProvider.Instance
+	  serverErr error
+	)
+	if string.Compare(zone, "local") == 0 {
+		newServer, serverErr = m.platformCtl.CreateServer(m.Platform, zone, name)
+	} else{
+		newServer, serverErr = m.platformCtl.GetServer(m.Platform, zone, name)
+	}
 	if serverErr != nil {
 		return nil, serverErr
 	}
