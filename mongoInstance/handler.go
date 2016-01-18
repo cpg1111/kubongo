@@ -32,7 +32,7 @@ func NewHandler(platform, projectID, confPath string, inst metadata.Instances) *
 		ProjectID:   projectID,
 		Platform:    platform,
 		platformCtl: host,
-		Manager:     *NewManager(platform, projectID, &host),
+		Manager:     *NewManager(platform, projectID, &host, inst),
 		Instances:   inst,
 	}
 }
@@ -103,7 +103,7 @@ func (m *MongoHandler) Post(res http.ResponseWriter, req *http.Request) {
 		log.Fatal(deErr)
 	}
 	if newInstanceTmpl.Kind == "Create" {
-		serverRes, serverErr := m.Manager.Create(newInstanceTmpl)
+		serverRes, serverErr := m.Manager.Create(newInstanceTmpl, &m.Instances)
 		if serverErr != nil {
 			log.Fatal(serverErr)
 		}

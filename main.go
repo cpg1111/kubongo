@@ -30,6 +30,6 @@ func main() {
 	server.Handle("/instances", mongoHandler)
 	log.Println("Kubongo Process started and is listening on port", *port)
 	log.Println("monitoring", *initMaster)
-	mongoHandler.Manager.Monitor(initMaster)
+	mongoHandler.Manager.Monitor(initMaster, &instances)
 	log.Fatal(http.ListenAndServe(portNum, server))
 }

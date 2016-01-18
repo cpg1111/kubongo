@@ -11,7 +11,7 @@ type Instances []hostProvider.Instance
 func (inst Instances) ToMap() (instanceMap map[string]hostProvider.Instance) {
 	for i := range inst {
 		castInst := inst[i].(hostProvider.GcloudInstance)
-		instanceMap[fmt.Sprintf("%v", castInst.Id)] = inst[i]
+		instanceMap[fmt.Sprintf("%v", castInst.Name)] = inst[i]
 	}
 	return
 }

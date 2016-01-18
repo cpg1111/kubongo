@@ -194,7 +194,7 @@ type InstanceTemplate struct {
 	Source      string `json:"source"`
 }
 
-func (g GcloudHost) CreateServer(namespace, zone, name, machineType, sourceImage, source string) ([]byte, error) {
+func (g GcloudHost) CreateServer(namespace, zone, name, machineType, sourceImage, source string) (Instance, error) {
 	gcloudRoute := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances", namespace, zone)
 	newInstance := &InstanceTemplate{
 		Name:        name,
@@ -212,11 +212,13 @@ func (g GcloudHost) CreateServer(namespace, zone, name, machineType, sourceImage
 		return nil, resErr
 	}
 	defer res.Body.Close()
-	body, bErr := ioutil.ReadAll(res.Body)
-	if bErr != nil {
-		return nil, bErr
+	decoder := json.NewDecoder(res.Body)
+	result := &GcloudInstance{}
+	decodeErr := decoder.Decode(result)
+	if decodeErr != nil {
+		return nil, decodeErr
 	}
-	return body, nil
+	return result, nil
 }
 
 func (g GcloudHost) DeleteServer(namespace, zone, name string) error {
