@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"strings"
+    "strings"
 	"time"
 
 	"github.com/cpg1111/kubongo/hostProvider"
@@ -45,8 +45,8 @@ func (m *Manager) Register(zone, name string, instances *metadata.Instances) ([]
 		newServer hostProvider.Instance
 	  serverErr error
 	)
-	if string.Compare(zone, "local") == 0 {
-		newServer, serverErr = m.platformCtl.CreateServer(m.Platform, zone, name)
+	if strings.Contains(zone, "local") {
+		newServer, serverErr = m.platformCtl.CreateServer(m.Platform, zone, name, "27017", "mongo", "mongo")
 	} else{
 		newServer, serverErr = m.platformCtl.GetServer(m.Platform, zone, name)
 	}

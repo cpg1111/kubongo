@@ -13,15 +13,18 @@ import (
 type ImageManager struct {
 	Platform   string
 	OS         string
-	SSHCommand string
+	SSHCommand *exec.Cmd
 }
 
-func getLocalOS() string, error {
+func getLocalOS() string {
 	osNameCMD := exec.Command("cat", "/etc/*-release", "|", "grep", "PRETTY_NAME")
 	var osNameOut bytes.Buffer
-	osNameCMD.STDout = &osNameOut
+	osNameCMD.Stdout = &osNameOut
 	err := osNameCMD.Run()
-	return string(osNameOut), err
+    if err != nil {
+        log.Fatal(err)
+    }
+	return osNameOut.String()
 }
 
 func formatPrettyName(prettyName string) string {
@@ -32,15 +35,12 @@ func formatPrettyName(prettyName string) string {
 		distro = "debian"
 	} else if strings.Contains(prettyName, "CentOs") {
 		distro = "centos"
-	} else if string.Contains(prettyName, "CoreOs") {
+	} else if strings.Contains(prettyName, "CoreOs") {
 		distro = "coreos"
 	} else {
 		log.Fatal("Your OS is not currently supported, to change this, please create an issue @ https://github.com/cpg1111/kubongo/issues")
 	}
-	rx, rxErr := regexp.MustCompile("([0-9]+)")
-	if rxErr != nil {
-		panic(rxErr)
-	}
+	rx := regexp.MustCompile("([0-9]+)")
 	matches := rx.FindStringSubmatch(prettyName)
 	majorVer = matches[0]
 	minorVer = matches[1]
@@ -48,14 +48,17 @@ func formatPrettyName(prettyName string) string {
 }
 
 func NewImageManager(platform string) *ImageManager {
-	var sshCommand, imageOS string
+	var (
+        sshCommand *exec.Cmd
+        imageOS string
+    )
 	switch platform {
 	case "gcloud":
-		sshCommand := exec.Command("gcloud", "compute", "ssh")
+		sshCommand = exec.Command("gcloud", "compute", "ssh")
 		imageOS = os.Getenv("MONGO_INSTANCE_OS")
 		break
 	case "local":
-		sshCommand := exec.Command("sh")
+		sshCommand = exec.Command("sh")
 		imageOS = formatPrettyName(getLocalOS())
 	}
 	if imageOS == "" {
@@ -73,9 +76,10 @@ func (i *ImageManager) run(finish chan error) {
 }
 
 func (i *ImageManager) RunCMD(command string) {
-	if strings.Compare(i.Platform, "GCE") == 0 {
+    originalLen := len(i.SSHCommand.Args)
+	if strings.Contains(i.Platform, "GCE") {
 		i.SSHCommand.Args = append(i.SSHCommand.Args, "--command", fmt.Sprintf("\"%s\"", command))
-	} else if strings.Compare(i.Platform, "local") == 0 {
+	} else if strings.Contains(i.Platform, "local") {
 		i.SSHCommand.Args = append(i.SSHCommand.Args, "-C", fmt.Sprintf("\"%s\"", command))
 	}
 	finish := make(chan error)
@@ -86,7 +90,7 @@ func (i *ImageManager) RunCMD(command string) {
 			if m1 != nil {
 				log.Fatal(m1)
 			} else {
-				i.SSHCommand = i.SSHCommand[0:len(i.SSHCommand)]
+				i.SSHCommand.Args = i.SSHCommand.Args[0:originalLen]
 			}
 		}
 	}

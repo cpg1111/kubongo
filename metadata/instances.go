@@ -16,11 +16,11 @@ func (inst Instances) ToMap() (instanceMap map[string]hostProvider.Instance) {
 	return
 }
 
-func New(firstInstance *hostProvider.Instance) Instances {
+func New(firstInstance *hostProvider.Instance) *Instances {
 	if firstInstance != nil {
-		return Instances{*firstInstance}
+		return &Instances{*firstInstance}
 	}
-	return Instances{}
+	return &Instances{}
 }
 
 func AddInstance(list Instances, instance hostProvider.Instance) Instances {
