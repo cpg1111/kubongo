@@ -14,6 +14,7 @@ import (
 	gce "google.golang.org/cloud/compute/metadata"
 )
 
+// GcloudHost is the HostProvider struct for gcloud, used to control instances on GCE
 type GcloudHost struct {
 	HostProvider
 	Project   string
@@ -25,11 +26,12 @@ type GcloudHost struct {
 type instanceResponse struct {
 	Kind          string   `json:"kind"`
 	SelfLink      string   `json:"selfLink"`
-	Id            string   `json:"id"`
+	ID            string   `json:"id"`
 	Items         []string `json:"items"`
 	NextPageToken string   `json:"nextPageToken"`
 }
 
+// GcloudAccessConfig is a nested struct for network access data
 type GcloudAccessConfig struct {
 	Kind       string `json:"kind"`
 	AccessType string `json:"type"`
@@ -37,6 +39,7 @@ type GcloudAccessConfig struct {
 	NatIP      string `json:"natIP"`
 }
 
+// GcloudNetworkInterface is a nested struct for network access data
 type GcloudNetworkInterface struct {
 	Network       string               `json:"network"`
 	NetworkIP     string               `json:"networkIP"`
@@ -44,6 +47,7 @@ type GcloudNetworkInterface struct {
 	AccessConfigs []GcloudAccessConfig `json:"accessConfigs"`
 }
 
+// GcloudDisk is a struct for data about an instances disk(s)
 type GcloudDisk struct {
 	Kind             string `json:"kind"`
 	Index            int    `json:"index"`
@@ -63,15 +67,17 @@ type GcloudDisk struct {
 	DiskInterface string   `json:"interface"`
 }
 
+// GcloudServiceAccounts is a struct for GCE service account data
 type GcloudServiceAccounts struct {
 	Email  string   `json:"email"`
 	Scopes []string `json:"scopes"`
 }
 
+// GcloudInstance is the outer most struct for GCE instance data
 type GcloudInstance struct {
 	Instance
 	Kind              string `json:"kind"`
-	Id                uint64 `json:"id"`
+	ID                uint64 `json:"id"`
 	CreationTimestamp string `json:"creationTimestamp"`
 	Zone              string `json:"zone"`
 	Status            string `json:"status"`
@@ -83,7 +89,7 @@ type GcloudInstance struct {
 		Fingerprint []byte   `json:"fingerprint"`
 	} `json:"tags"`
 	MachineType       string                   `json:"machineType"`
-	CanIpForward      bool                     `json:"canIpForward"`
+	CanIPForward      bool                     `json:"canIpForward"`
 	NetworkInterfaces []GcloudNetworkInterface `json:"networkInterfaces"`
 	Disks             []GcloudDisk             `json:"disks"`
 	Metadata          struct {
@@ -101,9 +107,10 @@ type GcloudInstance struct {
 		AutomaticRestart  bool   `json:"automaticRestart"`
 		Preemptible       bool   `json:"preemptible"`
 	} `json:"scheduling"`
-	CpuPlatform string `json:"cpuPlatform"`
+	CPUPlatform string `json:"cpuPlatform"`
 }
 
+// GetInternalIP returns the internal IP of its instance
 func (g GcloudInstance) GetInternalIP() string {
 	for i := range g.NetworkInterfaces {
 		if g.NetworkInterfaces[i].Name == "eth0" {
@@ -113,10 +120,12 @@ func (g GcloudInstance) GetInternalIP() string {
 	return ""
 }
 
+// NewGCEInstance returns a new GceInstance struct
 func NewGCEInstance() *GcloudInstance {
 	return &GcloudInstance{}
 }
 
+// NewGcloud returns a new GCE HostProvider
 func NewGcloud(p, jsonFile string) *GcloudHost {
 	var client *http.Client
 	if jsonFile != "" {
@@ -147,6 +156,7 @@ func NewGcloud(p, jsonFile string) *GcloudHost {
 	return newHost
 }
 
+// GetServers returns a slice of servers in GCE
 func (g GcloudHost) GetServers(namespace string) ([]Instance, error) {
 	gcloudRoute := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/instances", namespace)
 	res, resErr := g.Client.Get(gcloudRoute)
@@ -171,6 +181,7 @@ func (g GcloudHost) GetServers(namespace string) ([]Instance, error) {
 	return newInstances, nil
 }
 
+// GetServer returns a specific server on GCE
 func (g GcloudHost) GetServer(project, zone, name string) (Instance, error) {
 	gcloudRoute := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances/%s", project, zone, name)
 	res, resErr := g.Client.Get(gcloudRoute)
@@ -187,6 +198,7 @@ func (g GcloudHost) GetServer(project, zone, name string) (Instance, error) {
 	return result, nil
 }
 
+// InstanceTemplate is a struct for request data to create a server
 type InstanceTemplate struct {
 	Name        string `json:"name"`
 	MachineType string `json:"machineType"`
@@ -194,6 +206,7 @@ type InstanceTemplate struct {
 	Source      string `json:"source"`
 }
 
+// CreateServer will send a POST to the GCE api to create an instance
 func (g GcloudHost) CreateServer(namespace, zone, name, machineType, sourceImage, source string) (Instance, error) {
 	gcloudRoute := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances", namespace, zone)
 	newInstance := &InstanceTemplate{
@@ -221,6 +234,7 @@ func (g GcloudHost) CreateServer(namespace, zone, name, machineType, sourceImage
 	return result, nil
 }
 
+// DeleteServer will send GCE a DELETE to delete a specific instance
 func (g GcloudHost) DeleteServer(namespace, zone, name string) error {
 	gcloudRoute := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances/%s", namespace, zone, name)
 	req, reqErr := http.NewRequest("DELETE", gcloudRoute, nil)

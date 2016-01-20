@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// ImageManager is a struct with data for OS images for instances
 type ImageManager struct {
 	Platform   string
 	OS         string
@@ -21,9 +22,9 @@ func getLocalOS() string {
 	var osNameOut bytes.Buffer
 	osNameCMD.Stdout = &osNameOut
 	err := osNameCMD.Run()
-    if err != nil {
-        log.Fatal(err)
-    }
+	if err != nil {
+		log.Fatal(err)
+	}
 	return osNameOut.String()
 }
 
@@ -31,7 +32,7 @@ func formatPrettyName(prettyName string) string {
 	var distro, majorVer, minorVer string
 	if strings.Contains(prettyName, "Ubuntu") {
 		distro = "ubuntu"
-	} else if strings.Contains(prettyName, "Debian"){
+	} else if strings.Contains(prettyName, "Debian") {
 		distro = "debian"
 	} else if strings.Contains(prettyName, "CentOs") {
 		distro = "centos"
@@ -47,13 +48,14 @@ func formatPrettyName(prettyName string) string {
 	return fmt.Sprintf("%s-%s-%s", distro, majorVer, minorVer)
 }
 
+// NewImageManager returns a new ImageManager struct
 func NewImageManager(platform string) *ImageManager {
 	var (
-        sshCommand *exec.Cmd
-        imageOS string
-    )
+		sshCommand *exec.Cmd
+		imageOS    string
+	)
 	switch platform {
-	case "gcloud":
+	case "GCE":
 		sshCommand = exec.Command("gcloud", "compute", "ssh")
 		imageOS = os.Getenv("MONGO_INSTANCE_OS")
 		break
@@ -75,8 +77,9 @@ func (i *ImageManager) run(finish chan error) {
 	finish <- i.SSHCommand.Run()
 }
 
+// RunCMD runs a Bash command on targeted image
 func (i *ImageManager) RunCMD(command string) {
-    originalLen := len(i.SSHCommand.Args)
+	originalLen := len(i.SSHCommand.Args)
 	if strings.Contains(i.Platform, "GCE") {
 		i.SSHCommand.Args = append(i.SSHCommand.Args, "--command", fmt.Sprintf("\"%s\"", command))
 	} else if strings.Contains(i.Platform, "local") {
@@ -96,6 +99,7 @@ func (i *ImageManager) RunCMD(command string) {
 	}
 }
 
+// InstallMongo installs mongo on target image
 func (i *ImageManager) InstallMongo() {
 	var installCMD string
 	switch i.OS {

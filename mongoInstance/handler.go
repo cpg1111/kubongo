@@ -10,6 +10,7 @@ import (
 	"github.com/cpg1111/kubongo/metadata"
 )
 
+// MongoHandler handles http request for mongo instances
 type MongoHandler struct {
 	ProjectID   string
 	Platform    string
@@ -18,13 +19,15 @@ type MongoHandler struct {
 	Instances   metadata.Instances
 }
 
+// NewHandler creates a new mongo handler struct
 func NewHandler(platform, projectID, confPath string, inst metadata.Instances) *MongoHandler {
 	var host hostProvider.HostProvider
 	var hErr error
+	log.Println(platform == "local")
 	switch platform {
 	case "GCE":
 		host = *hostProvider.NewGcloud(projectID, confPath)
-        hErr = nil
+		hErr = nil
 	case "local":
 		host = *hostProvider.NewLocal()
 		hErr = nil
@@ -41,6 +44,7 @@ func NewHandler(platform, projectID, confPath string, inst metadata.Instances) *
 	}
 }
 
+// ServeHTTP serves http for mongo instance
 func (m MongoHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	log.Println("HTTP request:", *req)
 	switch req.Method {
@@ -61,6 +65,7 @@ type infoRes struct {
 	Instances         metadata.Instances `json:"instances"`
 }
 
+// Get for GET method on /instances
 func (m *MongoHandler) Get(res http.ResponseWriter, req *http.Request) {
 	numInsts := len(m.Instances)
 	payload := &infoRes{
@@ -79,6 +84,7 @@ func (m *MongoHandler) Get(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// InstanceTemplate is a struct for creating instances
 type InstanceTemplate struct {
 	Kind        string `json:"kind" yaml:"kind"` // should equal "Create" or "Register"
 	Name        string `json:"name" yaml:"name"`
@@ -88,7 +94,7 @@ type InstanceTemplate struct {
 	Source      string `json:"source" yaml:"source"`
 }
 
-// mongoHandler#Post will either create or register an instance based the "kind" field in the request body
+// Post will either create or register an instance based the "kind" field in the request body
 // Request Body Srtuct:
 // type InstanceTemplate struct{
 //     Kind        string `json:"kind"` // should equal "Create" or "Register"
@@ -121,11 +127,13 @@ func (m *MongoHandler) Post(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// DeleteData is req data to delete instance
 type DeleteData struct {
 	Zone string `json:"zone"`
 	Name string `json:"name"`
 }
 
+// Delete will delete instances
 func (m *MongoHandler) Delete(res http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 	reqDecoder := json.NewDecoder(req.Body)

@@ -31,14 +31,16 @@ func printHelp() {
 	os.Exit(0)
 }
 
+// DecodeInstanceFile will decode a JSON or YAML into an instance struct
+// See https://github.com/cpg1111/kubongo/mongoInstance/ for the fields of an InstanceTemplate
 func DecodeInstanceFile(filename string, file []byte) (*mongo.InstanceTemplate, error) {
 	instance := &mongo.InstanceTemplate{}
-	isYaml := (strings.Contains(filename, ".yaml") || strings.Contains(filename, ".yml"))
-	isJson := strings.Contains(filename, ".json")
+	isYAML := (strings.Contains(filename, ".yaml") || strings.Contains(filename, ".yml"))
+	isJSON := strings.Contains(filename, ".json")
 	var err error
-	if isYaml {
+	if isYAML {
 		err = yaml.Unmarshal(file, instance)
-	} else if isJson {
+	} else if isJSON {
 		err = json.Unmarshal(file, instance)
 	} else {
 		return nil, errors.New("input was not yaml or json")
@@ -46,6 +48,7 @@ func DecodeInstanceFile(filename string, file []byte) (*mongo.InstanceTemplate, 
 	return instance, err
 }
 
+// Create will send a post to the Specified endpoint to create the resource that corolates to the endpoint
 func Create(url string) (*http.Response, error) {
 	var instanceConf string
 	if len(os.Args) > 3 {
@@ -70,6 +73,7 @@ func Create(url string) (*http.Response, error) {
 	return nil, errors.New("no input given to create instance")
 }
 
+// Destroy will destroy a resource that corolates with the specified endpoint
 func Destroy(url string) (*http.Response, error) {
 	if len(os.Args) > 3 {
 		zoneName := os.Args[3]
@@ -92,6 +96,7 @@ func Destroy(url string) (*http.Response, error) {
 	return nil, errors.New("no instance zone given")
 }
 
+// Request will send a request to the Kubongo server
 func Request(host, port, method, endpoint string) (res *http.Response, resErr error) {
 	targetURL := fmt.Sprintf("http://%s:%s/%s", host, port, endpoint)
 	switch method {

@@ -4,18 +4,23 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-    "strings"
+	"strings"
 	"time"
 
 	"github.com/cpg1111/kubongo/hostProvider"
 	"github.com/cpg1111/kubongo/metadata"
 )
 
+// Manager manages mongo instances
 type Manager struct {
-	Project     string
-	Platform    string
+	// Name of Project in cloud host
+	Project string
+	// Platform for cloud provider
+	Platform string
+	// Struct to Controls cloud provider actions
 	platformCtl hostProvider.HostProvider
-	data        map[string]hostProvider.Instance
+	// Map of registered instances
+	data map[string]hostProvider.Instance
 }
 
 func addToInstances(instances *metadata.Instances, newServer hostProvider.Instance) {
@@ -23,6 +28,7 @@ func addToInstances(instances *metadata.Instances, newServer hostProvider.Instan
 	instances = &newInstances
 }
 
+// Create a new mongo instance
 func (m *Manager) Create(newInstanceTmpl *InstanceTemplate, instances *metadata.Instances) ([]byte, error) {
 	newServer, serverErr := m.platformCtl.CreateServer(
 		m.Platform,
@@ -36,30 +42,35 @@ func (m *Manager) Create(newInstanceTmpl *InstanceTemplate, instances *metadata.
 		return nil, serverErr
 	}
 	addToInstances(instances, newServer)
+	m.data = instances.ToMap()
 	newServerJSON, jErr := json.Marshal(&newServer)
 	return newServerJSON, jErr
 }
 
+// Register an existing mongo instance
 func (m *Manager) Register(zone, name string, instances *metadata.Instances) ([]byte, error) {
 	var (
 		newServer hostProvider.Instance
-	  serverErr error
+		serverErr error
 	)
 	if strings.Contains(zone, "local") {
 		newServer, serverErr = m.platformCtl.CreateServer(m.Platform, zone, name, "27017", "mongo", "mongo")
-	} else{
+	} else {
 		newServer, serverErr = m.platformCtl.GetServer(m.Platform, zone, name)
 	}
 	if serverErr != nil {
 		return nil, serverErr
 	}
 	addToInstances(instances, newServer)
+	m.data = instances.ToMap()
 	newServerJSON, jErr := json.Marshal(&newServer)
 	return newServerJSON, jErr
 }
 
+// Remove existing mongo instance
 func (m *Manager) Remove(zone, name string) error {
 	dErr := m.platformCtl.DeleteServer(m.Platform, zone, name)
+	m.data[name] = nil
 	return dErr
 }
 
@@ -86,8 +97,7 @@ func masterTmpl() *InstanceTemplate {
 }
 
 func (m *Manager) newMaster(rStatus, nStatus chan error, success chan []byte, instances *metadata.Instances) {
-	log.Println(m.data["master"])
-	master := m.data["master"].(hostProvider.GcloudInstance)
+	master := m.data["master"].(hostProvider.LocalInstance)
 	rStatus <- m.Remove(master.Zone, master.Name)
 	newInstance := masterTmpl()
 	newBytes, nErr := m.Create(newInstance, instances)
@@ -98,6 +108,7 @@ func (m *Manager) newMaster(rStatus, nStatus chan error, success chan []byte, in
 	}
 }
 
+// Monitor master mongo instance
 func (m *Manager) Monitor(masterIP *string, instances *metadata.Instances) {
 	monitor := newMonitor(masterIP)
 	isHealthy := true
@@ -126,6 +137,7 @@ func (m *Manager) Monitor(masterIP *string, instances *metadata.Instances) {
 	}
 }
 
+// NewManager creates a new manager struct
 func NewManager(proj, pf string, pfctl *hostProvider.HostProvider, instances metadata.Instances) *Manager {
 	return &Manager{Project: proj, Platform: pf, platformCtl: *pfctl, data: instances.ToMap()}
 }
