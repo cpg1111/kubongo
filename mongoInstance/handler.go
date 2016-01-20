@@ -10,33 +10,41 @@ import (
 	"github.com/cpg1111/kubongo/metadata"
 )
 
+// MongoHandler handles http request for mongo instances
 type MongoHandler struct {
-	projectID   string
+	ProjectID   string
 	Platform    string
 	platformCtl hostProvider.HostProvider
 	Manager     Manager
 	Instances   metadata.Instances
 }
 
+// NewHandler creates a new mongo handler struct
 func NewHandler(platform, projectID, confPath string, inst metadata.Instances) *MongoHandler {
 	var host hostProvider.HostProvider
 	var hErr error
+	log.Println(platform == "local")
 	switch platform {
-	case "gcloud":
+	case "GCE":
 		host = *hostProvider.NewGcloud(projectID, confPath)
+		hErr = nil
+	case "local":
+		host = *hostProvider.NewLocal()
+		hErr = nil
 	}
 	if hErr != nil {
 		log.Fatal(hErr)
 	}
 	return &MongoHandler{
-		projectID:   projectID,
+		ProjectID:   projectID,
 		Platform:    platform,
 		platformCtl: host,
-		Manager:     *NewManager(platform, &host),
+		Manager:     *NewManager(platform, projectID, &host, inst),
 		Instances:   inst,
 	}
 }
 
+// ServeHTTP serves http for mongo instance
 func (m MongoHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	log.Println("HTTP request:", *req)
 	switch req.Method {
@@ -44,8 +52,6 @@ func (m MongoHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		m.Get(res, req)
 	case "POST":
 		m.Post(res, req)
-	case "PUT":
-		m.Put(res, req)
 	case "DELETE":
 		m.Delete(res, req)
 	}
@@ -59,11 +65,12 @@ type infoRes struct {
 	Instances         metadata.Instances `json:"instances"`
 }
 
+// Get for GET method on /instances
 func (m *MongoHandler) Get(res http.ResponseWriter, req *http.Request) {
 	numInsts := len(m.Instances)
 	payload := &infoRes{
 		Platform:          m.Platform,
-		ProjectName:       m.projectID,
+		ProjectName:       m.ProjectID,
 		NumberOfInstances: numInsts,
 		Zones:             []string{},
 		Instances:         m.Instances,
@@ -77,6 +84,7 @@ func (m *MongoHandler) Get(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// InstanceTemplate is a struct for creating instances
 type InstanceTemplate struct {
 	Kind        string `json:"kind" yaml:"kind"` // should equal "Create" or "Register"
 	Name        string `json:"name" yaml:"name"`
@@ -86,7 +94,7 @@ type InstanceTemplate struct {
 	Source      string `json:"source" yaml:"source"`
 }
 
-// mongoHandler#Post will either create or register an instance based the "kind" field in the request body
+// Post will either create or register an instance based the "kind" field in the request body
 // Request Body Srtuct:
 // type InstanceTemplate struct{
 //     Kind        string `json:"kind"` // should equal "Create" or "Register"
@@ -105,28 +113,38 @@ func (m *MongoHandler) Post(res http.ResponseWriter, req *http.Request) {
 		log.Fatal(deErr)
 	}
 	if newInstanceTmpl.Kind == "Create" {
-		serverRes, serverErr := m.platformCtl.CreateServer(
-			m.Platform,
-			newInstanceTmpl.Zone,
-			newInstanceTmpl.Name,
-			newInstanceTmpl.MachineType,
-			newInstanceTmpl.SourceImage,
-			newInstanceTmpl.Source,
-		)
+		serverRes, serverErr := m.Manager.Create(newInstanceTmpl, &m.Instances)
 		if serverErr != nil {
 			log.Fatal(serverErr)
 		}
 		res.Write(serverRes)
 	} else {
-		m.Manager.Register(newInstanceTmpl.Zone, newInstanceTmpl.Name, &m.Instances)
-		res.Write([]byte("{\"message\":\"201 Created\"}"))
+		serverRes, serverErr := m.Manager.Register(newInstanceTmpl.Zone, newInstanceTmpl.Name, &m.Instances)
+		if serverErr != nil {
+			log.Fatal(serverRes, serverErr)
+		}
+		res.Write([]byte("{\"message\":\"201 CREATED\"}"))
 	}
 }
 
-func (m *MongoHandler) Put(res http.ResponseWriter, req *http.Request) {
-
+// DeleteData is req data to delete instance
+type DeleteData struct {
+	Zone string `json:"zone"`
+	Name string `json:"name"`
 }
 
+// Delete will delete instances
 func (m *MongoHandler) Delete(res http.ResponseWriter, req *http.Request) {
-
+	defer req.Body.Close()
+	reqDecoder := json.NewDecoder(req.Body)
+	data := &DeleteData{}
+	reqErr := reqDecoder.Decode(data)
+	if reqErr != nil {
+		log.Fatal(reqErr)
+	}
+	dErr := m.Manager.Remove(data.Zone, data.Name)
+	if dErr != nil {
+		log.Fatal(dErr)
+	}
+	res.Write([]byte("{\"message\":\"200 OK\"}"))
 }

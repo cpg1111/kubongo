@@ -31,21 +31,24 @@ func printHelp() {
 	os.Exit(0)
 }
 
+// DecodeInstanceFile will decode a JSON or YAML into an instance struct
+// See https://github.com/cpg1111/kubongo/mongoInstance/ for the fields of an InstanceTemplate
 func DecodeInstanceFile(filename string, file []byte) (*mongo.InstanceTemplate, error) {
 	instance := &mongo.InstanceTemplate{}
-	isYaml := (strings.Contains(filename, ".yaml") || strings.Contains(filename, ".yml"))
-	isJson := strings.Contains(filename, ".json")
+	isYAML := (strings.Contains(filename, ".yaml") || strings.Contains(filename, ".yml"))
+	isJSON := strings.Contains(filename, ".json")
 	var err error
-	if isYaml {
+	if isYAML {
 		err = yaml.Unmarshal(file, instance)
-	} else if isJson {
+	} else if isJSON {
 		err = json.Unmarshal(file, instance)
 	} else {
-		return nil, errors.New("Input was not yaml or json")
+		return nil, errors.New("input was not yaml or json")
 	}
 	return instance, err
 }
 
+// Create will send a post to the Specified endpoint to create the resource that corolates to the endpoint
 func Create(url string) (*http.Response, error) {
 	var instanceConf string
 	if len(os.Args) > 3 {
@@ -54,7 +57,7 @@ func Create(url string) (*http.Response, error) {
 		if confInfo != nil || confErr == nil {
 			confBytes, readErr := ioutil.ReadFile(instanceConf)
 			if readErr != nil {
-				return nil, errors.New("Could not open file to create instance")
+				return nil, errors.New("could not open file to create instance")
 			}
 			inst, instErr := DecodeInstanceFile(instanceConf, confBytes)
 			if instErr != nil {
@@ -67,28 +70,16 @@ func Create(url string) (*http.Response, error) {
 			return http.Post(url, "json", bytes.NewBuffer(instPayload))
 		}
 	}
-	return nil, errors.New("No input given to create instance")
+	return nil, errors.New("no input given to create instance")
 }
 
-func Edit(url string) (*http.Response, error) {
-	var instanceConf string
+// Destroy will destroy a resource that corolates with the specified endpoint
+func Destroy(url string) (*http.Response, error) {
 	if len(os.Args) > 3 {
-		instanceConf = os.Args[3]
-		confInfo, confErr := os.Stat(instanceConf)
-		if confInfo != nil || confErr == nil {
-			confBytes, readErr := ioutil.ReadFile(instanceConf)
-			if readErr != nil {
-				return nil, errors.New("Could not open file to create instance")
-			}
-			inst, instErr := DecodeInstanceFile(instanceConf, confBytes)
-			if instErr != nil {
-				return nil, instErr
-			}
-			instPayload, payloadErr := json.Marshal(inst)
-			if payloadErr != nil {
-				return nil, payloadErr
-			}
-			req, reqErr := http.NewRequest("PUT", url, bytes.NewBuffer(instPayload))
+		zoneName := os.Args[3]
+		if len(os.Args) > 4 {
+			instanceName := os.Args[3]
+			req, reqErr := http.NewRequest("DELETE", url, bytes.NewBuffer([]byte(fmt.Sprintf("{\"zone\":\"%s\", \"name\":\"%s\"}", zoneName, instanceName))))
 			if reqErr != nil {
 				return nil, reqErr
 			}
@@ -100,30 +91,12 @@ func Edit(url string) (*http.Response, error) {
 			}
 			return res, nil
 		}
-		return nil, confErr
+		return nil, errors.New("no instance name given")
 	}
-	return nil, errors.New("No edit file given")
+	return nil, errors.New("no instance zone given")
 }
 
-func Destroy(url string) (*http.Response, error) {
-	var instanceName string
-	if len(os.Args) > 3 {
-		instanceName = os.Args[3]
-		req, reqErr := http.NewRequest("DELETE", url, bytes.NewBuffer([]byte(fmt.Sprintf("{\"name\":\"%s\"}", instanceName))))
-		if reqErr != nil {
-			return nil, reqErr
-		}
-		req.Header.Set("content-type", "json")
-		client := &http.Client{}
-		res, resErr := client.Do(req)
-		if resErr != nil {
-			return nil, resErr
-		}
-		return res, nil
-	}
-	return nil, errors.New("No instance name given")
-}
-
+// Request will send a request to the Kubongo server
 func Request(host, port, method, endpoint string) (res *http.Response, resErr error) {
 	targetURL := fmt.Sprintf("http://%s:%s/%s", host, port, endpoint)
 	switch method {
@@ -132,9 +105,6 @@ func Request(host, port, method, endpoint string) (res *http.Response, resErr er
 		break
 	case "create":
 		res, resErr = Create(targetURL)
-		break
-	case "edit":
-		res, resErr = Edit(targetURL)
 		break
 	case "delete":
 		res, resErr = Destroy(targetURL)
