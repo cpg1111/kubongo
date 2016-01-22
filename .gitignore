@@ -28,3 +28,6 @@ _testmain.go
 
 # cloud platform config file
 /config.json
+
+/.vagrant/
+/kubongo
