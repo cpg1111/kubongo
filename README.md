@@ -1,5 +1,5 @@
 # kubongo
-Kubernetes Service Discovery for services Running Outside the Kubernetes Cluster.
+Kubernetes Service Discovery for Services Running Outside the Kubernetes Cluster.
 
 
 [![Build Status](https://travis-ci.org/cpg1111/kubongo.svg?branch=master)](https://travis-ci.org/cpg1111/kubongo)
