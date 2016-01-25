@@ -36,7 +36,7 @@ get-deps:
 build:
 	rm -rf ./Godeps/_workspace/
 	godep restore ./...
-	go build -o ./kubongo github.com/cpg1111/kubongo/
+	go build --ldflags '-w' -o ./kubongo github.com/cpg1111/kubongo/
 	$(LDD_CMD) ./kubongo
 	file ./kubongo
 install:
