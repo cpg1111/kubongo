@@ -17,20 +17,21 @@ Vagrant.configure(2) do |config|
     # echo "export PATH=$PATH:/usr/local/go/bin" >> /home/vagrant/.profile && \
     # echo "export GOPATH=$GOPATH:/home/vagrant/go" >> /home/vagrant/.profile && \
     # echo "export PATH=PATH:$GOPATH/bin" >> /home/vagrant/.profile && \
+    # sudo chmod -R 766 /home/vagrant/go/
+    # sudo chown -R vagrant:vagrant /home/vagrant/go/
     cmd = %Q(
         sudo apt-get update && sudo apt-get install -y curl build-essential git && \
         mkdir -p /home/vagrant/go/src/github.com/cpg1111 && mkdir -p /home/vagrant/go/pkg && mkdir -p /home/vagrant/go/bin && \
-        sudo chmod -R 766 /home/vagrant/go/
-        sudo chown -R vagrant:vagrant /home/vagrant/go/
         curl https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz > /home/vagrant/go.tar.gz && \
         sudo tar -C /usr/local -xzf /home/vagrant/go.tar.gz && \
         echo "export GOPATH=\$GOPATH:/home/vagrant/go" >> /home/vagrant/.profile && \
         echo "export PATH=\$PATH:/usr/local/go/bin:/home/vagrant/go/bin/" >> /home/vagrant/.profile && \
         rm /home/vagrant/go.tar.gz && \
         cd /home/vagrant/go/ && \
-        go get github.com/tools/godep && go install github.com/tools/godep && \
+        source /home/vagrant/.profile && \
+        /usr/local/go/bin/go get github.com/tools/godep && /usr/local/go/bin/go install github.com/tools/godep && \
         echo "success!"
     )
     config.vm.provision :shell, inline: cmd
-    config.vm.synced_folder '.', '/home/vagrant/go/src/github.com/cpg1111/kubongo'
+    config.vm.synced_folder '.', '/home/vagrant/go/src/github.com/cpg1111/kubongo', owner: 'vagrant'
 end
