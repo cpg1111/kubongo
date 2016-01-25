@@ -11,14 +11,6 @@ Vagrant.configure(2) do |config|
     config.vm.provider :vmware_fusion do |vw, override|
         override.vm.network :private_network, ip: $ip
     end
-    # GOPATH=$GOPATH:/home/vagrant/go /usr/local/go/bin/go get github.com/tools/godep && \
-    # echo "export GOPATH=\$GOPATH:`godep path`" >> /home/vagrant/.profile && \
-
-    # echo "export PATH=$PATH:/usr/local/go/bin" >> /home/vagrant/.profile && \
-    # echo "export GOPATH=$GOPATH:/home/vagrant/go" >> /home/vagrant/.profile && \
-    # echo "export PATH=PATH:$GOPATH/bin" >> /home/vagrant/.profile && \
-    # sudo chmod -R 766 /home/vagrant/go/
-    # sudo chown -R vagrant:vagrant /home/vagrant/go/
     cmd = %Q(
         sudo apt-get update && sudo apt-get install -y curl build-essential git && \
         mkdir -p /home/vagrant/go/src/github.com/cpg1111 && mkdir -p /home/vagrant/go/pkg && mkdir -p /home/vagrant/go/bin && \
