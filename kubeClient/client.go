@@ -24,6 +24,7 @@ import (
 	"golang.org/x/net/context"
 )
 
+// Controller for talking to Kubernetes
 type Controller struct {
 	APIServerIP string
 	Client      *kube.Client
@@ -32,6 +33,7 @@ type Controller struct {
 	EnvVarName  string
 }
 
+// New creates a new Controller struct
 func New(apiServerIP, namespace, evn string) *Controller {
 	httpClient := &http.Client{}
 	kubeClient, kubeErr := kube.NewClient(apiServerIP, httpClient)
@@ -73,6 +75,7 @@ func (c *Controller) kubeExec(pod api.Pod, cmd string, execErrs chan error) {
 	}
 }
 
+// UpdateServiceEndPoint updates kubernetes with the new endpoint for the service
 func (c *Controller) UpdateServiceEndPoint(newEndPoint string) error {
 	ctx := context.Background()
 	pods, pErr := c.Client.GetPods(ctx)

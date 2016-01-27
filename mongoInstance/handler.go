@@ -52,7 +52,7 @@ func NewHandler(platform, projectID, confPath string, inst metadata.Instances) *
 		ProjectID:   projectID,
 		Platform:    platform,
 		platformCtl: host,
-		Manager:     *NewManager(platform, projectID, &host, inst),
+		Manager:     *NewManager(platform, projectID, &host, &inst),
 		Instances:   inst,
 	}
 }

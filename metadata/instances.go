@@ -25,7 +25,7 @@ type Instances []hostProvider.Instance
 // ToMap converts slice of instances to a map of instances
 func (inst Instances) ToMap() (instanceMap map[string]hostProvider.Instance) {
 	for i := range inst {
-		castInst := inst[i].(hostProvider.GcloudInstance)
+		castInst := inst[i].(hostProvider.LocalInstance)
 		instanceMap[fmt.Sprintf("%v", castInst.Name)] = inst[i]
 	}
 	return
@@ -48,9 +48,9 @@ func AddInstance(list Instances, instance hostProvider.Instance) Instances {
 func RemoveInstance(list Instances, instance hostProvider.Instance) Instances {
 	newList := make(Instances, len(list)-1)
 	for i := range list {
-		castInst := list[i].(hostProvider.GcloudInstance)
-		castOther := instance.(hostProvider.GcloudInstance)
-		if castInst.ID != castOther.ID {
+		castInst := list[i].(hostProvider.LocalInstance)
+		castOther := instance.(hostProvider.LocalInstance)
+		if castInst.Name != castOther.Name {
 			newList[i] = list[i]
 		}
 	}

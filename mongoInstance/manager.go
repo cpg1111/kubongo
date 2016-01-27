@@ -32,8 +32,8 @@ type Manager struct {
 	Platform string
 	// Struct to Controls cloud provider actions
 	platformCtl hostProvider.HostProvider
-	// Map of registered instances
-	data map[string]hostProvider.Instance
+	// list of registered instances
+	data *metadata.Instances
 }
 
 func addToInstances(instances *metadata.Instances, newServer hostProvider.Instance) {
@@ -55,7 +55,7 @@ func (m *Manager) Create(newInstanceTmpl *InstanceTemplate, instances *metadata.
 		return nil, serverErr
 	}
 	addToInstances(instances, newServer)
-	m.data = instances.ToMap()
+	m.data = instances
 	newServerJSON, jErr := json.Marshal(&newServer)
 	return newServerJSON, jErr
 }
@@ -76,7 +76,7 @@ func (m *Manager) Register(zone, name string, instances *metadata.Instances) ([]
 	}
 	log.Println(newServer)
 	addToInstances(instances, newServer)
-	m.data = instances.ToMap()
+	m.data = instances
 	newServerJSON, jErr := json.Marshal(&newServer)
 	return newServerJSON, jErr
 }
@@ -84,7 +84,8 @@ func (m *Manager) Register(zone, name string, instances *metadata.Instances) ([]
 // Remove existing mongo instance
 func (m *Manager) Remove(zone, name string) error {
 	dErr := m.platformCtl.DeleteServer(m.Platform, zone, name)
-	m.data[name] = nil
+	newData := metadata.RemoveInstance(*m.data, m.data.ToMap()[name])
+	m.data = &newData
 	return dErr
 }
 
@@ -111,7 +112,7 @@ func masterTmpl() *InstanceTemplate {
 }
 
 func (m *Manager) newMaster(rStatus, nStatus chan error, success chan []byte, instances *metadata.Instances) {
-	master := m.data["master"].(hostProvider.LocalInstance)
+	master := m.data.ToMap()["master"].(hostProvider.LocalInstance)
 	rStatus <- m.Remove(master.Zone, master.Name)
 	newInstance := masterTmpl()
 	newBytes, nErr := m.Create(newInstance, instances)
@@ -152,6 +153,6 @@ func (m *Manager) Monitor(masterIP *string, instances *metadata.Instances) {
 }
 
 // NewManager creates a new manager struct
-func NewManager(proj, pf string, pfctl *hostProvider.HostProvider, instances metadata.Instances) *Manager {
-	return &Manager{Project: proj, Platform: pf, platformCtl: *pfctl, data: instances.ToMap()}
+func NewManager(proj, pf string, pfctl *hostProvider.HostProvider, instances *metadata.Instances) *Manager {
+	return &Manager{Project: proj, Platform: pf, platformCtl: *pfctl, data: instances}
 }
