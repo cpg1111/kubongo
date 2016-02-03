@@ -15,6 +15,7 @@ package metadata
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/cpg1111/kubongo/hostProvider"
 )
@@ -31,17 +32,27 @@ func (inst Instances) ToMap() (instanceMap map[string]hostProvider.Instance) {
 	return
 }
 
+var current *Instances
+
 // New creates a new Instance slice
 func New(firstInstance *hostProvider.Instance) *Instances {
-	if firstInstance != nil {
-		return &Instances{*firstInstance}
+	log.Println("NEW")
+	if current != nil {
+		return current
 	}
-	return &Instances{}
+	if firstInstance != nil {
+		current = &Instances{*firstInstance}
+		return current
+	}
+	current = &Instances{}
+	return current
 }
 
 // AddInstance will add an instance to the Instances slice
-func AddInstance(list Instances, instance hostProvider.Instance) Instances {
-	return append(list, instance)
+func AddInstance(list *Instances, instance hostProvider.Instance) *Instances {
+	newList := append(*list, instance)
+	list = &newList
+	return list
 }
 
 // RemoveInstance will remove an instance from the slice
