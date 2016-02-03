@@ -15,7 +15,6 @@ package metadata
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/cpg1111/kubongo/hostProvider"
 )
@@ -36,7 +35,6 @@ var current *Instances
 
 // New creates a new Instance slice
 func New(firstInstance *hostProvider.Instance) *Instances {
-	log.Println("NEW")
 	if current != nil {
 		return current
 	}

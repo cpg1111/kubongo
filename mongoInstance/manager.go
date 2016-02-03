@@ -37,7 +37,6 @@ type Manager struct {
 }
 
 func addToInstances(instances *metadata.Instances, newServer hostProvider.Instance) {
-	log.Println("I FEEL LIKE I'M TAKING CRAZY PILLS")
 	instances = metadata.AddInstance(instances, newServer)
 }
 
