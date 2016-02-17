@@ -70,7 +70,7 @@ func (l LocalHost) CreateServer(namespace, zone, name, machineType, sourceImage,
 	} else if sourceImage != "" {
 		process = "docker"
 	} else {
-		process = "mongo"
+		process = "mongod"
 	}
 	port, pErr := strconv.Atoi(machineType)
 	newInst := &LocalInstance{
@@ -84,6 +84,7 @@ func (l LocalHost) CreateServer(namespace, zone, name, machineType, sourceImage,
 	if strings.Contains(newInst.Process, "mongo") {
 		imageManager := image.NewImageManager("local")
 		imageManager.InstallMongo()
+		go imageManager.RunCMD("mongod")
 	}
 	return newInst, pErr
 }

@@ -17,7 +17,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"time"
 
 	kube "golang.org/x/build/kubernetes"
 	api "golang.org/x/build/kubernetes/api"
@@ -92,5 +94,16 @@ func (c *Controller) UpdateServiceEndPoint(newEndPoint string) error {
 			}
 		}
 	}
+	return nil
+}
+
+// Ping checks that Kubernetes' master exists
+func (c *Controller) Ping() error {
+	conn, connErr := net.Dial("tcp", c.APIServerIP)
+	if connErr != nil {
+		return connErr
+	}
+	conn.SetDeadline(time.Now().Add(3 * time.Second))
+	defer conn.Close()
 	return nil
 }

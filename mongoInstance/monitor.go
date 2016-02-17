@@ -33,9 +33,11 @@ func (m *Monitor) HealthCheck(healthChannel chan bool) {
 	} else if res.Status != "200 OK" {
 		log.Println(fmt.Errorf("healthcheck responded with status other than 200 OK, %s", res.Status))
 		healthChannel <- false
+	} else {
+		log.Println(*m.MasterIP, "passes health check")
+		healthChannel <- true
 	}
-	log.Println(*m.MasterIP, "passes health check")
-	healthChannel <- true
+	return
 }
 
 func newMonitor(masterIP *string) *Monitor {

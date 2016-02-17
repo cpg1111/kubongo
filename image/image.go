@@ -100,14 +100,16 @@ func NewImageManager(platform string) *ImageManager {
 }
 
 func (i *ImageManager) run(finish chan error) {
+	log.Println("Running exec")
 	finish <- i.SSHCommand.Run()
+	//log.Println(i.SSHCommand.Output())
 }
 
 // RunCMD runs a Bash command on targeted image
 func (i *ImageManager) RunCMD(command string) {
+	waitgroup.Wait()
 	waitgroup.Add(1)
 	defer waitgroup.Done()
-	originalLen := len(i.SSHCommand.Args)
 	if strings.Contains(i.Platform, "GCE") {
 		i.SSHCommand.Args = append(i.SSHCommand.Args, "--command", fmt.Sprintf("\"%s\"", command))
 	} else if strings.Contains(i.Platform, "local") {
@@ -115,16 +117,15 @@ func (i *ImageManager) RunCMD(command string) {
 	}
 	finish := make(chan error)
 	go i.run(finish)
-	for {
-		select {
-		case m1 := <-finish:
-			if m1 != nil && !strings.Contains(fmt.Sprintf("%v", m1), "127") {
-				log.Println("blunk")
-				log.Fatal(m1)
-			} else {
-				i.SSHCommand.Args = i.SSHCommand.Args[0:originalLen]
-				return
-			}
+	select {
+	case m1 := <-finish:
+		log.Println(command, "pid:", i.SSHCommand.Process.Pid, "is about to close")
+		if m1 != nil && !strings.Contains(fmt.Sprintf("%v", m1), "127") {
+			log.Fatal("res", m1)
+		} else {
+			log.Println("res", m1)
+			i.SSHCommand = exec.Command(i.SSHCommand.Path)
+			return
 		}
 	}
 }
@@ -136,7 +137,8 @@ func (i *ImageManager) InstallMongo() {
 	case "ubuntu-14-04", "ubuntu-12-04", "debian-7", "debian-8":
 		installCMD = "apt-get update && apt-get install mongodb"
 	case "darwin--": // TODO clean up "darwin" OS name
-		installCMD = "brew update && brew install mongodb"
+		log.Println("is darwin OS")
+		installCMD = "/usr/local/bin/brew update && /usr/local/bin/brew install mongodb"
 	}
 	i.RunCMD(installCMD)
 }
