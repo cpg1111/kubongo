@@ -1,3 +1,16 @@
+/*
+Copyright 2015 Christian Grabowski All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package mongoInstance
 
 import (
@@ -8,6 +21,7 @@ import (
 	"time"
 
 	"github.com/cpg1111/kubongo/hostProvider"
+	kube "github.com/cpg1111/kubongo/kubeClient"
 	"github.com/cpg1111/kubongo/metadata"
 )
 
@@ -19,13 +33,20 @@ type Manager struct {
 	Platform string
 	// Struct to Controls cloud provider actions
 	platformCtl hostProvider.HostProvider
-	// Map of registered instances
-	data map[string]hostProvider.Instance
+	// list of registered instances
+	data *metadata.Instances
+	// controller for talking to the Kubernetes api
+	kubeCtl *kube.Controller
 }
 
 func addToInstances(instances *metadata.Instances, newServer hostProvider.Instance) {
-	newInstances := metadata.AddInstance(*instances, newServer)
-	instances = &newInstances
+	instances = metadata.AddInstance(instances, newServer)
+}
+
+// SetKubeCtl sets the kubernetes api controller, this is not done in the New() function so that the manager depends souly on mongo-side things
+// and only needs a kubeClient controller for updates
+func (m *Manager) SetKubeCtl(ktl *kube.Controller) {
+	m.kubeCtl = ktl
 }
 
 // Create a new mongo instance
@@ -42,7 +63,7 @@ func (m *Manager) Create(newInstanceTmpl *InstanceTemplate, instances *metadata.
 		return nil, serverErr
 	}
 	addToInstances(instances, newServer)
-	m.data = instances.ToMap()
+	m.data = instances
 	newServerJSON, jErr := json.Marshal(&newServer)
 	return newServerJSON, jErr
 }
@@ -61,8 +82,9 @@ func (m *Manager) Register(zone, name string, instances *metadata.Instances) ([]
 	if serverErr != nil {
 		return nil, serverErr
 	}
+	log.Println(newServer)
 	addToInstances(instances, newServer)
-	m.data = instances.ToMap()
+	m.data = instances
 	newServerJSON, jErr := json.Marshal(&newServer)
 	return newServerJSON, jErr
 }
@@ -70,11 +92,22 @@ func (m *Manager) Register(zone, name string, instances *metadata.Instances) ([]
 // Remove existing mongo instance
 func (m *Manager) Remove(zone, name string) error {
 	dErr := m.platformCtl.DeleteServer(m.Platform, zone, name)
-	m.data[name] = nil
+	newData := metadata.RemoveInstance(*m.data, m.data.ToMap()[name])
+	m.data = &newData
 	return dErr
 }
 
-func masterTmpl() *InstanceTemplate {
+func localMasterTmpl() *InstanceTemplate {
+	return &InstanceTemplate{
+		Kind:        "Create",
+		Name:        "master",
+		MachineType: "27017",
+		SourceImage: "",
+		Source:      "",
+	}
+}
+
+func gcloudMasterTmpl() *InstanceTemplate {
 	zone := os.Getenv("DEFAULT_ZONE")
 	if zone == "" {
 		zone = "us-central1-f"
@@ -96,26 +129,34 @@ func masterTmpl() *InstanceTemplate {
 	}
 }
 
-func (m *Manager) newMaster(rStatus, nStatus chan error, success chan []byte, instances *metadata.Instances) {
-	master := m.data["master"].(hostProvider.LocalInstance)
-	rStatus <- m.Remove(master.Zone, master.Name)
-	newInstance := masterTmpl()
+func (m *Manager) newMaster(rStatus, nStatus chan error, success chan []byte, instances *metadata.Instances) error {
+	log.Println(m.data.ToMap())
+	uncastMaster := m.data.ToMap()["master"]
+	if uncastMaster == nil {
+		rStatus <- nil
+	} else {
+		master := uncastMaster.(hostProvider.LocalInstance)
+		rStatus <- m.Remove(master.Zone, master.Name)
+	}
+	newInstance := localMasterTmpl()
 	newBytes, nErr := m.Create(newInstance, instances)
 	if nErr != nil {
 		nStatus <- nErr
 	} else {
 		success <- newBytes
 	}
+	return nil
 }
 
 // Monitor master mongo instance
-func (m *Manager) Monitor(masterIP *string, instances *metadata.Instances) {
+func (m *Manager) Monitor(masterIP *string, instances *metadata.Instances) error {
 	monitor := newMonitor(masterIP)
 	isHealthy := true
 	healthChannel := make(chan bool)
 	for isHealthy {
 		go monitor.HealthCheck(healthChannel)
 		isHealthy = <-healthChannel
+		log.Println("health:", isHealthy)
 		time.Sleep(time.Second * 3)
 	}
 	removeStatus := make(chan error)
@@ -125,19 +166,24 @@ func (m *Manager) Monitor(masterIP *string, instances *metadata.Instances) {
 	for {
 		select {
 		case m1 := <-removeStatus:
-			log.Fatal(m1)
+			if m1 != nil {
+				return m1
+			}
 			break
 		case m2 := <-newMasterStatus:
-			log.Fatal(m2)
+			if m2 != nil {
+				log.Fatal(m2)
+				return m2
+			}
 			break
 		case m3 := <-successStatus:
 			log.Println("Created", string(m3))
-			break
+			return m.Monitor(masterIP, instances)
 		}
 	}
 }
 
 // NewManager creates a new manager struct
-func NewManager(proj, pf string, pfctl *hostProvider.HostProvider, instances metadata.Instances) *Manager {
-	return &Manager{Project: proj, Platform: pf, platformCtl: *pfctl, data: instances.ToMap()}
+func NewManager(proj, pf string, pfctl *hostProvider.HostProvider, instances *metadata.Instances) *Manager {
+	return &Manager{Project: proj, Platform: pf, platformCtl: *pfctl, data: instances}
 }
