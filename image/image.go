@@ -136,7 +136,7 @@ func (i *ImageManager) InstallMongo() {
 	switch i.OS {
 	case "ubuntu-14-04", "ubuntu-12-04", "debian-7", "debian-8":
 		installCMD = "apt-get update && apt-get install mongodb"
-	case "darwin--": // TODO clean up "darwin" OS name
+	case "darwin--": // clean up "darwin" OS name
 		log.Println("is darwin OS")
 		installCMD = "/usr/local/bin/brew update && /usr/local/bin/brew install mongodb"
 	}
