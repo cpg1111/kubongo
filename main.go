@@ -46,16 +46,16 @@ func main() {
 	instances := metadata.New(nil)
 	mongoHandler := mongo.NewHandler(*platform, *project, *platConfPath, *instances)
 	server.Handle("/instances", mongoHandler)
-	log.Println("Kubongo Process started and is listening on port", *port)
+	log.Println("main:49 Kubongo Process started and is listening on port", *port)
 	kubeClient := kube.New(*initKubeMaster, *kubeNamespace, *kubeEnvVarName)
 	pingErr := kubeClient.Ping()
 	if pingErr != nil {
 		log.Fatal(pingErr)
 	}
 	mongoHandler.Manager.SetKubeCtl(kubeClient)
-	log.Println("Registering", *initMongoMaster)
+	log.Println("main:56 Registering", *initMongoMaster)
 	mongoHandler.Manager.Register(*masterZone, "master", instances)
-	log.Println("monitoring", *initMongoMaster)
+	log.Println("main:58 monitoring", *initMongoMaster)
 	mongoHandler.Manager.Monitor(initMongoMaster, instances)
 	log.Fatal(http.ListenAndServe(portNum, server))
 }

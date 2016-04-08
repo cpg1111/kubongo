@@ -36,7 +36,6 @@ type MongoHandler struct {
 func NewHandler(platform, projectID, confPath string, inst metadata.Instances) *MongoHandler {
 	var host hostProvider.HostProvider
 	var hErr error
-	log.Println(platform == "local")
 	switch platform {
 	case "GCE":
 		host = *hostProvider.NewGcloud(projectID, confPath)
@@ -59,7 +58,7 @@ func NewHandler(platform, projectID, confPath string, inst metadata.Instances) *
 
 // ServeHTTP serves http for mongo instance
 func (m MongoHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	log.Println("HTTP request:", *req)
+	log.Println("handler:61 HTTP request:", *req)
 	switch req.Method {
 	case "GET":
 		m.Get(res, req)
