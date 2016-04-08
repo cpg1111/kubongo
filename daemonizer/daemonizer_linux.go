@@ -14,6 +14,7 @@ limitations under the License.
 package daemonizer
 
 import (
+	"errors"
 	"log"
 	"os"
 	"os/exec"
@@ -28,7 +29,11 @@ type Daemonizer struct {
 
 // New creates a new Instance of Daemonizer
 func New(cmd string) *Daemonizer {
-	newDaemonizer := &Daemonizer{cmd}
+	newDaemonizer := &Daemonizer{
+		toDaemon: cmd,
+		Command:  nil,
+		isSysv:   false,
+	}
 	hasSysv, sysvErr := os.Stat("/sbin/sysv")
 	hasSystemd, systemdErr := os.Stat("/sbin/systemd")
 	if (hasSysv == nil || sysvErr != nil) && (hasSystemd == nil || systemdErr != nil) {
@@ -38,14 +43,20 @@ func New(cmd string) *Daemonizer {
 		newDaemonizer.Command = exec.Command("service")
 		newDaemonizer.isSysv = true
 	} else {
-		newDaemonizer.Command("systemd-run")
+		newDaemonizer.Command = exec.Command("systemd-run")
 		newDaemonizer.isSysv = false
 	}
 	return newDaemonizer
 }
 
 // Run runs Daemonizer's Command
-func (d *Daemonizer) Run() error {
+func (d *Daemonizer) Run(cmd string) error {
+	if cmd != "" {
+		d.toDaemon = cmd
+	}
+	if d.toDaemon == "" {
+		return errors.New("no command was given")
+	}
 	if d.isSysv {
 		d.Command.Args = append(d.Command.Args, d.toDaemon, "start")
 	} else {

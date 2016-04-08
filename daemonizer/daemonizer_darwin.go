@@ -27,7 +27,7 @@ func (d *Daemonizer) Run(cmd string) error {
 		d.toDaemon = cmd
 	}
 	if d.toDaemon == "" {
-		errors.New("no command was given")
+		return errors.New("no command was given")
 	}
 	output, outErr := d.Command.Output()
 	if outErr != nil {
