@@ -82,7 +82,6 @@ func (m *Manager) Register(zone, name string, instances *metadata.Instances) ([]
 	if serverErr != nil {
 		return nil, serverErr
 	}
-	log.Println(newServer)
 	addToInstances(instances, newServer)
 	m.data = instances
 	newServerJSON, jErr := json.Marshal(&newServer)
@@ -130,11 +129,12 @@ func gcloudMasterTmpl() *InstanceTemplate {
 }
 
 func (m *Manager) newMaster(rStatus, nStatus chan error, success chan []byte, instances *metadata.Instances) error {
-	log.Println(m.data.ToMap())
+	log.Println("manager:132 NEWMASTER")
 	uncastMaster := m.data.ToMap()["master"]
 	if uncastMaster == nil {
 		rStatus <- nil
 	} else {
+		log.Println("manager:137 REMOVE")
 		master := uncastMaster.(hostProvider.LocalInstance)
 		rStatus <- m.Remove(master.Zone, master.Name)
 	}
@@ -156,7 +156,7 @@ func (m *Manager) Monitor(masterIP *string, instances *metadata.Instances) error
 	for isHealthy {
 		go monitor.HealthCheck(healthChannel)
 		isHealthy = <-healthChannel
-		log.Println("health:", isHealthy)
+		log.Println("manager:159 health:", isHealthy)
 		time.Sleep(time.Second * 3)
 	}
 	removeStatus := make(chan error)
@@ -177,7 +177,7 @@ func (m *Manager) Monitor(masterIP *string, instances *metadata.Instances) error
 			}
 			break
 		case m3 := <-successStatus:
-			log.Println("Created", string(m3))
+			log.Println("manager:180 Created", string(m3))
 			return m.Monitor(masterIP, instances)
 		}
 	}

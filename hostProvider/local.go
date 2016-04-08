@@ -82,9 +82,9 @@ func (l LocalHost) CreateServer(namespace, zone, name, machineType, sourceImage,
 	pointerL := &l
 	pointerL.Instances = append(l.Instances, newInst)
 	if strings.Contains(newInst.Process, "mongo") {
-		imageManager := image.NewImageManager("local")
-		imageManager.InstallMongo()
-		go imageManager.RunCMD("mongod")
+		imageManager := image.NewManager("local")
+		//imageManager.InstallMongo()
+		imageManager.RunCMD("/usr/local/bin/mongod")
 	}
 	return newInst, pErr
 }
