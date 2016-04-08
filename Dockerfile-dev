@@ -1,0 +1,7 @@
+FROM golang:1.6.0-debian
+MAINTAINER Christian Grabowski
+RUN apt-get update && apt-get install build-essential
+ADD . /opt/src/
+WORKDIR /opt/src/
+RUN make
+CMD ["./kubongo"]
