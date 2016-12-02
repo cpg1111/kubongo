@@ -31,7 +31,6 @@ func (d *Daemonizer) Run(cmd string) error {
 	}
 	output, outErr := d.Command.Output()
 	if outErr != nil {
-		log.Println("OUT ERROR MOTHERFUCKER!!!")
 		return outErr
 	}
 	runErr := d.Command.Run()
